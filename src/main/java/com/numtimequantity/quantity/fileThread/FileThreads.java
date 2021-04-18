@@ -1,0 +1,421 @@
+package com.numtimequantity.quantity.fileThread;
+
+
+
+import com.numtimequantity.quantity.bankDancerMethod.GlobalFun;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * 存储线程
+ */
+public  class FileThreads extends GlobalFun implements Runnable {
+    private GlobalBuyObject globalBuyObject;//公共趋势判断对象
+    private OnOffIfThreads onOffIfThreads;  //线程开关控制对象
+    /*以下是量化程序变量  都应该弄成局域性*/
+    private int ii;
+    private Double account;
+    private String time;
+    /**
+     * 构造函数
+     * @param globalBuyObject  公共趋势判断对象 每个线程的公共变量
+     * @param onOffIfThreads   每个线程的开关控制器
+     * @param api_key
+     * @param secretkey
+     */
+    public FileThreads(GlobalBuyObject globalBuyObject, OnOffIfThreads onOffIfThreads, String api_key, String secretkey){
+        this.globalBuyObject=globalBuyObject; //这个方式可以使新创建的每一个量化程序共享公共趋势判断变量的值
+        this.onOffIfThreads=onOffIfThreads; //开关控制对象
+        this.api_key=api_key;
+        this.secretkey=secretkey;
+        System.out.println("执行了构造函数");
+    }
+
+    /**
+     * 把与庄共舞策略搬到这来
+     */
+    @Override
+    public void run() {//通过父线程的    this.runIfMap.get(this.threadLocal.get().get("uuid"))     来控制开关
+        try {
+            int globalI;
+            Double account;
+            Long time;
+            while (this.getLineIf()){//this.runIfMap.get(this.threadLocal.get().get("uuid"))
+                Double a = this.getA();
+                Double k = this.getK();//this.getDouble((String) this.threadLocal.get().get("k"));
+                System.out.println("a  "+a+"k  "+k);
+                Double ying = 0.0;
+                Double sun = 0.0;
+                String sellid;
+                String buyid;
+                String buyid_;
+                String sellidAll;
+                int miniimaxIf;
+                ConcurrentHashMap sellidAttribute=new ConcurrentHashMap();
+                ConcurrentHashMap buyidAttribute=new ConcurrentHashMap();
+                ConcurrentHashMap sellidAllAttribute=new ConcurrentHashMap();
+                Long marketTime=0L;
+                Long recorderTime=0L;
+                Double newLastPrice;
+                Double myPosition=0.0;
+                Boolean construction = false;
+                Boolean firstIf = true;
+                ConcurrentHashMap buyObject=null;
+
+                /*存储策略启动时的余额*/
+                System.out.println(this.account());
+                account = this.account();
+                /*存储策略启动时的时间戳*/
+                time = new Date().getTime();
+                /*设置持仓方向为双向持仓*/
+                if (!this.getWay()){
+                    this.setWay();
+                }
+                /*初始化建仓程序*/
+                while (0.0==myPosition && this.getLineIf()){
+                    if(firstIf){
+                        while (this.getLineIf()){
+                            //buyObject=this.getBuyObject();
+                            System.out.println("策略指标函数的值→→→→→→→→→→→→→→→→→→→→→→→→"+globalBuyObject.getBuyObject());
+                            if((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
+                                break;
+                            }else {
+                                System.out.println("目前为下跌程序");
+                            }
+                            try {
+                                if (!this.getLineIf()){
+                                    break;
+                                }
+                                Thread.sleep(30000);
+                                System.out.println("策略内线程名"+Thread.currentThread().getName());
+                            }catch (Exception e){
+                                System.out.println(e);
+                            }
+                        }
+                        firstIf = false;
+                    }
+                    construction = true;
+                    if (!this.getLineIf()){
+                        break;
+                    }
+                    if ((int)globalBuyObject.getBuyObject().get("minNumber")>=5){
+                        buyid = this.marketBuy(2*a);//市价开多
+                        buyid_ = this.marketSell(a);//市价开空
+                        System.out.println("市价追涨");
+                    }else {
+                        newLastPrice = this.lastPrice();
+                        if(sun==0.0){
+                            ying = newLastPrice + k + 1;
+                            sun = newLastPrice -k - 1;
+                        }
+                        if (newLastPrice > sun + k ){
+                            sun = newLastPrice - k;
+                            System.out.println("等待下单中,勿追涨...");
+                        }
+                        if(newLastPrice<sun){
+                            buyid = this.marketBuy(2*a);
+                            buyid_ = this.marketSell(a);
+                            System.out.println("市价成交");
+                        }
+                    }
+                    try {
+                        Thread.sleep(60000);
+                    }catch (Exception e){
+
+                    }
+                    myPosition = this.position().get("up");
+
+                }
+                if (!this.getLineIf()){
+                    break; //while后面紧跟停止跳出
+                }
+
+                recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                newLastPrice = this.lastPrice();
+                Double newPositionPrice = this.position().get("upPrice");
+
+                ArrayList<Double> yings = new ArrayList<>();
+                ArrayList<Double> suns = new ArrayList<>();
+                int ii;
+                //ii 0的值不可能是空值
+                BigDecimal bigDecimal = new BigDecimal(myPosition/(2*a));
+                ii = bigDecimal.setScale(0, RoundingMode.DOWN).intValue();
+                globalI=ii;
+                if (ii>0){
+                    for (int size=0;size<ii;size++){
+                        yings.add(0.0);
+                        suns.add(0.0);
+                    }
+                }
+                yings.set(ii-1,this.getPriceNewduo(newLastPrice,newPositionPrice,k));
+                if (construction==true){//如果执行了建仓程序
+                    if(newLastPrice<newPositionPrice){
+                        suns.set(ii-1,newLastPrice-k);
+                    }else {
+                        suns.set(ii-1,newPositionPrice-k);
+                    }
+
+                }else {
+                    suns.set(ii-1,newLastPrice-k);
+                }
+
+                /*二级循环*/
+                while (this.getLineIf()){
+                    miniimaxIf = 0;
+                    //当前实际盈亏
+                    Double allAccountProfit = this.getDoubleNum(2,this.accountNow(Long.toString(time))-account);//真实余额减去策略启动时的余额等于真实盈亏
+                    System.out.println("收益:"+allAccountProfit+"USDT");
+
+                    //打印收益
+
+                    myPosition = this.position().get("up");//持仓张数,持仓数量
+                    /*↓ 多头情况上下通道下单↓*/
+                    if(0 != myPosition && this.getLineIf()){ //
+                        if(ii-globalI>0){ //交易一圈回来 ii在后面会变化
+                            Double averagePrice = 0.0;
+                            for( int i = globalI; i < ii; i++){
+                                averagePrice = averagePrice + yings.get(i-1); //计算每次止盈价的平均值
+                            }
+                            ying = averagePrice/(ii-globalI+1);
+                            System.out.println("循环第: "+(ii-globalI)+"圈"+"ying的值是:"+ying);
+                        }else {
+                            ying = yings.get(ii-1);
+                            System.out.println("快止盈的时候ying的值是:"+ying);
+                        }
+                        /*循环指标判断程序*/
+                        while (this.getLineIf()){
+
+                            try{
+                                Thread.sleep(20000);
+                            }catch (Exception e){
+
+                            }
+                            newLastPrice = this.lastPrice();
+                            if (newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
+                                this.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
+                            }
+                            if (suns.get(ii-1)+k-newLastPrice>(suns.get(ii-1)+k)*0.08){ //现价低于止损价x%时止损
+                                this.marketCloseAllProfit("LONG");//平多头时输入LONG
+                                System.out.println("触发止损1");
+                                break;
+                            }
+                            if ((Long)globalBuyObject.getBuyObject().get("time")-recorderTime<15*60*1000){//现在时间减去上一次时间大于15分钟
+                                try{
+                                    Thread.sleep(60000);
+                                }catch (Exception e){
+
+                                }
+                            }else if (!(Boolean) globalBuyObject.getBuyObject().get("buyIfOk")){ //如果下单条件不成立则进来看看需不需要止损
+                                //8小时内"buyIfOk"为通过的次数小于3次  并且是  初始化仓位   并且  现价比止盈价高
+                                if (ii <=globalI && newLastPrice > ying){
+                                    miniimaxIf = 3; //暂时先让三级循环一区执行此情况
+                                    break;
+                                }else if (ii > globalI && newLastPrice > yings.get(ii-1)){
+                                    miniimaxIf = 4;
+                                    break;
+                                }
+                                try{
+                                    Thread.sleep(40000);
+                                }catch (Exception e){
+
+                                }
+                            }else if ((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(Double)globalBuyObject.getBuyObject().get("volume")>=3.0){//尝试性操作,8小时符合条件的次数在1次或以上就下单2021年3月7日添加
+                                if (ii<=globalI){ //初始化仓位时回到三级循环一区
+                                    miniimaxIf = 1;
+                                    break;
+                                }else {//有额外仓位时 进入三级循环二区
+                                    miniimaxIf = 2;
+                                    break;
+                                }
+                            }
+                            System.out.println("检测时间间隔:"+((Long)globalBuyObject.getBuyObject().get("time")-recorderTime));
+                            System.out.println("策略内线程名"+Thread.currentThread().getName());
+                        }
+                        if (!this.getLineIf()){
+                            break; //while后面紧跟停止跳出
+                        }
+                    }else {
+                        break;
+                    }
+                    ConcurrentHashMap<String, Double> positionNew = this.position();//更新最新持仓信息
+
+                    if (!this.getLineIf()){
+                        break;
+                    }
+                    if (miniimaxIf == 3){
+                        this.marketCloseAllProfit("LONG");//平多头时输入LONG  平仓全部
+                        if (positionNew.get("down")!=0.0){
+                            this.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                        }
+                        System.out.println("触发三级三区的止盈");
+                        ii--;
+                    }else if (miniimaxIf == 4){
+                        this.marketCloseBuy(2*a);
+                        if (positionNew.get("down")!=0.0){
+                            this.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                        }
+                        ii--;
+                        System.out.println("三级循环四区止盈");
+                    }
+                    newLastPrice = this.lastPrice();//更新最新价格
+                    /*↓三级循环1区↓*/
+                    Boolean ifsuns = true;
+                    while (miniimaxIf == 1 && this.getLineIf()){
+                        Double originalSun = suns.get(ii-1);
+                        //刚进来时现价分三种情况:1.newLastPrice 位于上半部分  2.newLastPrice 位于下半部分  3.newLastPrice 位于suns.get(ii)下面
+                        if (ifsuns && newLastPrice - k < suns.get(ii-1)){ //情况2 刚进来时允许通过一次
+                            suns.add(ii-1,newLastPrice-k-6);
+                        }
+
+                        if (newLastPrice-k-suns.get(ii-1)>5 && originalSun-5>suns.get(ii-1)){//情况2第一次时通过  情况1并且suns[ii]有被调低过时通过  情况3会被拦截
+                            suns.add(ii-1,newLastPrice - k);
+                            ifsuns = false;
+                        }
+                        buyidAttribute.clear(); //清空两个变量的值
+                        sellidAllAttribute.clear();
+                        Boolean sellidAllOk = false;
+                        Boolean buyidOk = false;
+                        if (newLastPrice>ying){
+                            sellidAll = this.marketCloseAllProfit("LONG");//市价平掉多头所以订单
+                            if (positionNew.get("down")!=0.0){
+                                this.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                            }
+                            sellidAllOk = true;
+                            try{
+                                Thread.sleep(15000);
+                            }catch (Exception e){
+
+                            }
+                            sellidAllAttribute = this.come(sellidAll);
+                            System.out.println("止盈平仓全部 止盈3-1");
+                        }else if (newLastPrice < suns.get(ii-1)){
+                            buyid = this.marketBuy(2*a);//市价开多
+                            this.marketSell(a);
+                            buyidOk = true;
+                            try{
+                                Thread.sleep(15000);
+                            }catch (Exception e){
+
+                            }
+                            buyidAttribute = this.come(buyid);
+                            System.out.println("市价买入 建仓3-1");
+                        }
+                        /*判断两个订单状态*/
+                        if (buyidOk){
+                            ii++;
+                            if (yings.size()<=ii-1){
+                                yings.add(this.getDouble((String) buyidAttribute.get("avgPrice"))+k);
+                                suns.add(this.getDouble((String) buyidAttribute.get("avgPrice"))-k);
+                            }else{
+                                yings.add(ii-1,this.getDouble((String) buyidAttribute.get("avgPrice"))+k);
+                                suns.add(ii-1,this.getDouble((String) buyidAttribute.get("avgPrice"))-k);
+                            }
+                            recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                            break;
+                        }else  if (sellidAllOk){
+                            ii--;
+                            yings.add(ii-1,this.getDouble((String)sellidAllAttribute.get("avgPrice"))+k);
+                            suns.add(ii-1,this.getDouble((String)sellidAllAttribute.get("avgPrice"))-k);
+                            recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                            break;
+                        }
+                        try {
+                            Thread.sleep(3000);
+                        }catch (Exception e){}
+                        newLastPrice = this.lastPrice();
+                    }
+                    /*↓ 三级循环2区 ↓*/
+                    Boolean ifsuns2 = true;
+                    while (miniimaxIf == 2&&this.getLineIf()){
+                        Double originalSun2 = suns.get(ii-1);
+                        if (ifsuns2 && newLastPrice-k<suns.get(ii-1)){
+                            suns.add(ii-1,newLastPrice-k+6);
+                        }
+                        /*能进来就是市价成交,以进不进来为风险控制,不存在现价比sun[ii]低还得慢慢追涨的情况*/
+                        if (newLastPrice-k-suns.get(ii-1)>5 && originalSun2-5>suns.get(ii-1)){
+                            suns.add(ii-1,newLastPrice-k);
+                            ifsuns2 = false;
+                        }
+                        sellidAttribute.clear();
+                        buyidAttribute.clear();
+                        Boolean sellidOk = false;
+                        Boolean buyidOk2 = false;
+                        if (newLastPrice>yings.get(ii-1)){
+                            sellid = this.marketCloseBuy(2*a);
+                            if (positionNew.get("down")!=0.0){
+                                this.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                            }
+                            sellidOk = true;
+                            try {
+                                Thread.sleep(15000);
+                            }catch (Exception e){
+
+                            }
+                            sellidAttribute = this.come(sellid);
+                        }else if (newLastPrice<suns.get(ii-1)){
+                            buyid = this.marketBuy(2*a);
+                            this.marketSell(a);
+                            buyidOk2 = true;
+                            try {
+                                Thread.sleep(15000);
+                            }catch (Exception e){
+
+                            }
+                            buyidAttribute = this.come(buyid);
+                        }
+                        //如果成交跳出
+                        if (sellidOk){
+                            ii--;
+                            recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                            break;
+                        }else if (buyidOk2){
+                            ii++;
+                            if (yings.size()<=ii-1){
+                                yings.add(this.getDouble((String)buyidAttribute.get("avgPrice"))+k);
+                                suns.add(this.getDouble((String)buyidAttribute.get("avgPrice"))-k);
+                            }else {
+                                yings.add(ii-1,this.getDouble((String)buyidAttribute.get("avgPrice"))+k);
+                                suns.add(ii-1,this.getDouble((String)buyidAttribute.get("avgPrice"))-k);
+                            }
+                            recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                            break;
+                        }
+                        try {
+                            Thread.sleep(3000);
+                        }catch (Exception e){}
+                        newLastPrice = this.lastPrice();
+                    }
+                }
+            }
+            System.out.println("策略线程被终止");
+        }catch (Exception e){
+            System.out.println("错误是:"+e);
+            System.out.println(this.getLineIf());
+            System.out.println("执行了报错终止程序");
+        }
+    }
+    /*每个线程的的开关控制器*/
+    private Boolean getLineIf(){
+        return this.onOffIfThreads.getLineIf().get(this.onOffIfThreads.getThreadLocal().get().get("uuid"));
+    }
+    private Double getA(){
+        return (Double) this.onOffIfThreads.getThreadLocal().get().get("a"); //下单额
+    }
+    private Double getK(){
+        return (Double) this.onOffIfThreads.getThreadLocal().get().get("k"); //跨度
+    }
+    /**
+     * 将小数保留小数点后面的位数
+     * @param m  小数点后面的位数
+     * @param a  小数
+     * @return
+     */
+    public Double getDoubleNum(int m,Double a){
+        return new BigDecimal(a).setScale(m, RoundingMode.HALF_DOWN).doubleValue();
+    }
+}
+

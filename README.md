@@ -1,37 +1,93 @@
-# DancerQuantity
+# exchangeQuantity
 
 #### 介绍
-数字时代分布式的量化运行部分
+创建基础springboot项目
 
-#### 软件架构
-软件架构说明
+本程序为数字时代项目后端的第二部分
+程序部署后先运行公共变量buyObject线程,然后再运行量化策略
+
+#### 运行环境 本项目采用 jdk15.0.2    maven 3.6.3 进行开发
+运行环境：   
+jdk版本11以上  spring boot版本2.3.3.RELEASE
+(2021年开发时用的jdk版本是15.0.2)
+
+IDEA
+ 
+File→Project Structure→Project→Project SDK 此处两个地方版本号  选择java11
+
+File→Project Structure→Modules 此处一个地方的版本号：java11
+
+File→Settings→Build,Execution,Deployment→Complier→Java Complier 此处两个地方版本号：java11
+
+File→Settings→Build,Execution,Deployment→Build Tools→Maven→绑定Maven安装的根目录
+
+注意：如果初次导入没有运行按钮，点File→Project Structure→Modules
+然后点+号。选Import module from...选maven 一直点下一步完成
+
+IDEA开启自动导包：
+File→Settings→Editor→General→Auto Import→
+把Add unambiguous imports on the fly
+和Optimize imports on the fly 这两项打上对勾
+
+# **运行逻辑/包含的部分**
+
+1. /fileThread/FileThread{}类项目启动后运行 → 启动定时器方法获取行情和行情判断
+
+2. /fileThread/FileThread{}类lineStop变量为线程存储器
+
+3. 量化策略程序 /bankDancer/BankDancer{}类
+
+4. /severiceThread/RunbankDancer{}类 具体的线程运行层,控制线程关闭
+
+5. /controller层
+
+    ① BuyIfObjectTest{}类 打印趋势判断函数    http://localhost:端口号/buIf
+    
+    ② StartPage{}类 传入参数,运行一个线程      http://localhost:端口号/start
+    
+    ③ CloseThresdPage{}类 传入参数,关闭一个线程    http://localhost:端口号/closeLine
+    
+    ④ login{} 登录类
+    
+    ⑤ register{} 注册类 
+
+6. 数据库,一共四张表:用户表;  潜力币种表; solana钱包余额表(暂未开发) 
+
+   ① 数据库地址  /resources/application.yml
+
+   ② 数据库方法  /dao/目录下接口都是
+   
+   ③ 数据库方法的实现 /resources/mapper.coinMapper.xml 包含创建表格
+   
+   ④ 德鲁伊连接池配置 /config/DruidConfig
+   
+   ⑤ 数据库表对应的类 /domain
+
+7. solana公链钱包相关 /core/  
+
+# **运行逻辑**
+
+用户注册页面 → 存储用户信息至数据库
+
+绑定交易所key页面 → 存储到数据库
+
+用户登录 → 判断uuid策略是否在运行 
+        
+          否 → 填写参数运行策略 
+          
+          是 →  显示停止策略按钮
 
 
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+数据库内潜力币种,后台添加
 
 
-#### 特技
+每个币种的现货状态,管理员手动在后台更高
+    
+    ① buy 检测用户有无持仓,如果没有则买入
+    
+    ② stop 停止检测
+    
+    ③ sell 检测用户有没有持仓,如果又则卖出
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+
+暂时先不进行日志信息的打印
