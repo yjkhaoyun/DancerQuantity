@@ -3,37 +3,30 @@ package com.numtimequantity.quantity.fileThread;
 
 
 import com.numtimequantity.quantity.bankDancerMethod.GlobalFun;
+import lombok.Data;
+import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 存储线程
+ * 与庄共舞线程,为了不在线程类里使用@Autowired,有两种方式开启多线程
+ * 1.将线程类加入spring容器,在开启线程前先给属性赋值进行初始化
+ * 2.创建线程类对象时利用构造函数传参,让线程的属性享受bean中的公共变量
  */
+@Data
+@Component
 public  class BankDancerThread  implements Runnable {
     private GlobalBuyObject globalBuyObject;//公共趋势判断对象
-    private OnOffIfThread onOffIfThread;  //线程开关控制对象
-    /*以下是量化程序变量  都应该弄成局域性*/
-    private int ii;
-    private Double account;
-    private String time;
     private GlobalFun globalFun;
-    /**
-     * 构造函数
-     * @param globalBuyObject  公共趋势判断对象 每个线程的公共变量
-     * @param onOffIfThread   每个线程的开关控制器
-     * @param api_key
-     * @param secretkey
-     */
-    public BankDancerThread(GlobalBuyObject globalBuyObject, OnOffIfThread onOffIfThread, GlobalFun globalFun){
-        this.globalBuyObject=globalBuyObject; //这个方式可以使新创建的每一个量化程序共享公共趋势判断变量的值
-        this.onOffIfThread = onOffIfThread; //开关控制对象
-        this.globalFun=globalFun;
-        System.out.println("执行了构造函数");
-    }
+    private volatile ConcurrentHashMap<String, Boolean> lineThreadIf; //线程开关控制 uuid 和 true||false  HashMap最多可以存1万条数据
+    //线程副本区,父线程给子线程传值,平级线程不可见  一共有三个值   uuid,a和k 比如{uuid:"",a:2.2,k:2.2} 除了能存HashMap,也能存别的格式
+    private ThreadLocal<HashMap<String,Object>> threadLocal;
+
 
     /**
      * 把与庄共舞策略搬到这来
@@ -400,13 +393,13 @@ public  class BankDancerThread  implements Runnable {
     }
     /*每个线程的的开关控制器*/
     private Boolean getLineIf(){
-        return this.onOffIfThread.getLineIf().get(this.onOffIfThread.getThreadLocal().get().get("uuid"));
+        return this.lineThreadIf.get(this.getThreadLocal().get().get("uuid"));
     }
     private Double getA(){
-        return (Double) this.onOffIfThread.getThreadLocal().get().get("a"); //下单额
+        return (Double) this.getThreadLocal().get().get("a"); //下单额
     }
     private Double getK(){
-        return (Double) this.onOffIfThread.getThreadLocal().get().get("k"); //跨度
+        return (Double) this.getThreadLocal().get().get("k"); //跨度
     }
     /**
      * 将小数保留小数点后面的位数

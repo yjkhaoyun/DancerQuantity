@@ -1,10 +1,8 @@
 package com.numtimequantity.quantity.bankDancerMethod;
 
 
-import com.numtimequantity.quantity.fileThread.GlobalBuyObject;
 import com.numtimequantity.quantity.utils.ShaUtils;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;

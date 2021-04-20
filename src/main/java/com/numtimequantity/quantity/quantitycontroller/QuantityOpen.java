@@ -4,7 +4,6 @@ package com.numtimequantity.quantity.quantitycontroller;
 import com.numtimequantity.quantity.bankDancerMethod.GlobalFun;
 import com.numtimequantity.quantity.fileThread.BankDancerThread;
 import com.numtimequantity.quantity.fileThread.GlobalBuyObject;
-import com.numtimequantity.quantity.fileThread.OnOffIfThread;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,8 +21,7 @@ public class QuantityOpen {
     @Autowired
     GlobalBuyObject globalBuyObject;
     @Autowired
-    OnOffIfThread onOffIfThread;
-
+    BankDancerThread bankDancerThread;
     /**
      *
      *  访问测试连接 http://localhost/start?uuid=jjj&a=0.001&k=50
@@ -33,20 +31,19 @@ public class QuantityOpen {
     @RequestMapping("/start")
     @ResponseBody
     public String oneP(HttpServletRequest request){
-        if (onOffIfThread.getLineIf().containsKey(request.getParameter("uuid"))&&
-                onOffIfThread.getLineIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
+        if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))&&
+                bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
             System.out.println("打印uuid的状态");
-            System.out.println(onOffIfThread.getLineIf());
             return "程序已经在运行中";
         }else {
-            GlobalFun globalFun = new GlobalFun(globalBuyObject.getRestTemplate(), "", "");
-            BankDancerThread bankDancerThread = new BankDancerThread(globalBuyObject, onOffIfThread, globalFun);
+            bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), "", ""));
+            bankDancerThread.setGlobalBuyObject(globalBuyObject);
             HashMap<String, Object> hashMap = new HashMap<>();
             hashMap.put("uuid",request.getParameter("uuid"));
             hashMap.put("a",request.getParameter("a"));
             hashMap.put("k",request.getParameter("k"));
-            onOffIfThread.getThreadLocal().set(hashMap);//将副本线程的值设成uuid 传进run子线程内
-            onOffIfThread.getLineIf().put(request.getParameter("uuid"),true);
+            bankDancerThread.getThreadLocal().set(hashMap);
+            bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),true);
             Thread thread = new Thread(bankDancerThread);
             thread.start();
             return "量化程序开始运行";
@@ -66,14 +63,14 @@ public class QuantityOpen {
     @RequestMapping("/closeLine")
     @ResponseBody
     public String getLine(HttpServletRequest request){
-        if (!onOffIfThread.getLineIf().containsKey(request.getParameter("uuid"))){
+        if (!bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))){
             return "请求错误!";//uuid值不存在map中
-        }else if (!onOffIfThread.getLineIf().get(request.getParameter("uuid"))){
+        }else if (!bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){
             return "线程已经处于关闭状态";
         }else{
-            onOffIfThread.getLineIf().put(request.getParameter("uuid"),false);//停止run线程
+            bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),false);//停止run线程
             System.out.println("设置完后看下值,线程关闭");
-            System.out.println(onOffIfThread.getLineIf());
+            System.out.println(bankDancerThread.getLineThreadIf());
             return "成功关闭量化机器人！";
         }
     }
