@@ -12,14 +12,14 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 @Data
-public class OnOffIfThreads {
+public class OnOffIfThread {
     private volatile ConcurrentHashMap<String, Boolean> lineIf; //线程开关控制 uuid 和 true||false  HashMap最多可以存1万条数据
     /**
      * 线程副本区,父线程给子线程传值,平级线程不可见  一共有三个值   uuid,a和k 比如{uuid:"",a:2.2,k:2.2}
      * 除了能存HashMap,也能存别的格式
      */
     private ThreadLocal<HashMap<String,Object>> threadLocal;
-    OnOffIfThreads(){
+    OnOffIfThread(){
         this.lineIf=new ConcurrentHashMap<>();
         this.threadLocal=new TransmittableThreadLocal<>();
     }

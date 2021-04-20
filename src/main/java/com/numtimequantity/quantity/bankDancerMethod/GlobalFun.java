@@ -3,6 +3,7 @@ package com.numtimequantity.quantity.bankDancerMethod;
 
 
 import com.numtimequantity.quantity.bankDancerInterface.ImplBankDancer;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -12,10 +13,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class GlobalFun extends ActiveMethod implements ImplBankDancer {
     /*构造方法，传入两个key的值*/
-    /*GlobalFun(String api_key,String secretkey){
+    public GlobalFun(RestTemplate restTemplate, String api_key, String secretkey){
         this.setApi_key(api_key);
         this.setSecretkey(secretkey);
-    };*/
+        this.setRestTemplate(restTemplate);
+    };
 
     /**
      *

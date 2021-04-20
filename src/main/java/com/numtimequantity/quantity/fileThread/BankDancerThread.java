@@ -13,25 +13,25 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 存储线程
  */
-public  class FileThreads extends GlobalFun implements Runnable {
+public  class BankDancerThread  implements Runnable {
     private GlobalBuyObject globalBuyObject;//公共趋势判断对象
-    private OnOffIfThreads onOffIfThreads;  //线程开关控制对象
+    private OnOffIfThread onOffIfThread;  //线程开关控制对象
     /*以下是量化程序变量  都应该弄成局域性*/
     private int ii;
     private Double account;
     private String time;
+    private GlobalFun globalFun;
     /**
      * 构造函数
      * @param globalBuyObject  公共趋势判断对象 每个线程的公共变量
-     * @param onOffIfThreads   每个线程的开关控制器
+     * @param onOffIfThread   每个线程的开关控制器
      * @param api_key
      * @param secretkey
      */
-    public FileThreads(GlobalBuyObject globalBuyObject, OnOffIfThreads onOffIfThreads, String api_key, String secretkey){
+    public BankDancerThread(GlobalBuyObject globalBuyObject, OnOffIfThread onOffIfThread, GlobalFun globalFun){
         this.globalBuyObject=globalBuyObject; //这个方式可以使新创建的每一个量化程序共享公共趋势判断变量的值
-        this.onOffIfThreads=onOffIfThreads; //开关控制对象
-        this.api_key=api_key;
-        this.secretkey=secretkey;
+        this.onOffIfThread = onOffIfThread; //开关控制对象
+        this.globalFun=globalFun;
         System.out.println("执行了构造函数");
     }
 
@@ -67,13 +67,13 @@ public  class FileThreads extends GlobalFun implements Runnable {
                 ConcurrentHashMap buyObject=null;
 
                 /*存储策略启动时的余额*/
-                System.out.println(this.account());
-                account = this.account();
+                System.out.println(globalFun.account());
+                account = globalFun.account();
                 /*存储策略启动时的时间戳*/
                 time = new Date().getTime();
                 /*设置持仓方向为双向持仓*/
-                if (!this.getWay()){
-                    this.setWay();
+                if (!globalFun.getWay()){
+                    globalFun.setWay();
                 }
                 /*初始化建仓程序*/
                 while (0.0==myPosition && this.getLineIf()){
@@ -103,11 +103,11 @@ public  class FileThreads extends GlobalFun implements Runnable {
                         break;
                     }
                     if ((int)globalBuyObject.getBuyObject().get("minNumber")>=5){
-                        buyid = this.marketBuy(2*a);//市价开多
-                        buyid_ = this.marketSell(a);//市价开空
+                        buyid = globalFun.marketBuy(2*a);//市价开多
+                        buyid_ = globalFun.marketSell(a);//市价开空
                         System.out.println("市价追涨");
                     }else {
-                        newLastPrice = this.lastPrice();
+                        newLastPrice = globalFun.lastPrice();
                         if(sun==0.0){
                             ying = newLastPrice + k + 1;
                             sun = newLastPrice -k - 1;
@@ -117,8 +117,8 @@ public  class FileThreads extends GlobalFun implements Runnable {
                             System.out.println("等待下单中,勿追涨...");
                         }
                         if(newLastPrice<sun){
-                            buyid = this.marketBuy(2*a);
-                            buyid_ = this.marketSell(a);
+                            buyid = globalFun.marketBuy(2*a);
+                            buyid_ = globalFun.marketSell(a);
                             System.out.println("市价成交");
                         }
                     }
@@ -127,7 +127,7 @@ public  class FileThreads extends GlobalFun implements Runnable {
                     }catch (Exception e){
 
                     }
-                    myPosition = this.position().get("up");
+                    myPosition = globalFun.position().get("up");
 
                 }
                 if (!this.getLineIf()){
@@ -135,8 +135,8 @@ public  class FileThreads extends GlobalFun implements Runnable {
                 }
 
                 recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
-                newLastPrice = this.lastPrice();
-                Double newPositionPrice = this.position().get("upPrice");
+                newLastPrice = globalFun.lastPrice();
+                Double newPositionPrice = globalFun.position().get("upPrice");
 
                 ArrayList<Double> yings = new ArrayList<>();
                 ArrayList<Double> suns = new ArrayList<>();
@@ -151,7 +151,7 @@ public  class FileThreads extends GlobalFun implements Runnable {
                         suns.add(0.0);
                     }
                 }
-                yings.set(ii-1,this.getPriceNewduo(newLastPrice,newPositionPrice,k));
+                yings.set(ii-1,globalFun.getPriceNewduo(newLastPrice,newPositionPrice,k));
                 if (construction==true){//如果执行了建仓程序
                     if(newLastPrice<newPositionPrice){
                         suns.set(ii-1,newLastPrice-k);
@@ -167,12 +167,12 @@ public  class FileThreads extends GlobalFun implements Runnable {
                 while (this.getLineIf()){
                     miniimaxIf = 0;
                     //当前实际盈亏
-                    Double allAccountProfit = this.getDoubleNum(2,this.accountNow(Long.toString(time))-account);//真实余额减去策略启动时的余额等于真实盈亏
+                    Double allAccountProfit = this.getDoubleNum(2,globalFun.accountNow(Long.toString(time))-account);//真实余额减去策略启动时的余额等于真实盈亏
                     System.out.println("收益:"+allAccountProfit+"USDT");
 
                     //打印收益
 
-                    myPosition = this.position().get("up");//持仓张数,持仓数量
+                    myPosition = globalFun.position().get("up");//持仓张数,持仓数量
                     /*↓ 多头情况上下通道下单↓*/
                     if(0 != myPosition && this.getLineIf()){ //
                         if(ii-globalI>0){ //交易一圈回来 ii在后面会变化
@@ -194,12 +194,12 @@ public  class FileThreads extends GlobalFun implements Runnable {
                             }catch (Exception e){
 
                             }
-                            newLastPrice = this.lastPrice();
+                            newLastPrice = globalFun.lastPrice();
                             if (newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
-                                this.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
+                                globalFun.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
                             }
                             if (suns.get(ii-1)+k-newLastPrice>(suns.get(ii-1)+k)*0.08){ //现价低于止损价x%时止损
-                                this.marketCloseAllProfit("LONG");//平多头时输入LONG
+                                globalFun.marketCloseAllProfit("LONG");//平多头时输入LONG
                                 System.out.println("触发止损1");
                                 break;
                             }
@@ -241,27 +241,27 @@ public  class FileThreads extends GlobalFun implements Runnable {
                     }else {
                         break;
                     }
-                    ConcurrentHashMap<String, Double> positionNew = this.position();//更新最新持仓信息
+                    ConcurrentHashMap<String, Double> positionNew = globalFun.position();//更新最新持仓信息
 
                     if (!this.getLineIf()){
                         break;
                     }
                     if (miniimaxIf == 3){
-                        this.marketCloseAllProfit("LONG");//平多头时输入LONG  平仓全部
+                        globalFun.marketCloseAllProfit("LONG");//平多头时输入LONG  平仓全部
                         if (positionNew.get("down")!=0.0){
-                            this.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                            globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                         }
                         System.out.println("触发三级三区的止盈");
                         ii--;
                     }else if (miniimaxIf == 4){
-                        this.marketCloseBuy(2*a);
+                        globalFun.marketCloseBuy(2*a);
                         if (positionNew.get("down")!=0.0){
-                            this.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                            globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                         }
                         ii--;
                         System.out.println("三级循环四区止盈");
                     }
-                    newLastPrice = this.lastPrice();//更新最新价格
+                    newLastPrice = globalFun.lastPrice();//更新最新价格
                     /*↓三级循环1区↓*/
                     Boolean ifsuns = true;
                     while (miniimaxIf == 1 && this.getLineIf()){
@@ -280,9 +280,9 @@ public  class FileThreads extends GlobalFun implements Runnable {
                         Boolean sellidAllOk = false;
                         Boolean buyidOk = false;
                         if (newLastPrice>ying){
-                            sellidAll = this.marketCloseAllProfit("LONG");//市价平掉多头所以订单
+                            sellidAll = globalFun.marketCloseAllProfit("LONG");//市价平掉多头所以订单
                             if (positionNew.get("down")!=0.0){
-                                this.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                                globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                             }
                             sellidAllOk = true;
                             try{
@@ -290,43 +290,43 @@ public  class FileThreads extends GlobalFun implements Runnable {
                             }catch (Exception e){
 
                             }
-                            sellidAllAttribute = this.come(sellidAll);
+                            sellidAllAttribute = globalFun.come(sellidAll);
                             System.out.println("止盈平仓全部 止盈3-1");
                         }else if (newLastPrice < suns.get(ii-1)){
-                            buyid = this.marketBuy(2*a);//市价开多
-                            this.marketSell(a);
+                            buyid = globalFun.marketBuy(2*a);//市价开多
+                            globalFun.marketSell(a);
                             buyidOk = true;
                             try{
                                 Thread.sleep(15000);
                             }catch (Exception e){
 
                             }
-                            buyidAttribute = this.come(buyid);
+                            buyidAttribute = globalFun.come(buyid);
                             System.out.println("市价买入 建仓3-1");
                         }
                         /*判断两个订单状态*/
                         if (buyidOk){
                             ii++;
                             if (yings.size()<=ii-1){
-                                yings.add(this.getDouble((String) buyidAttribute.get("avgPrice"))+k);
-                                suns.add(this.getDouble((String) buyidAttribute.get("avgPrice"))-k);
+                                yings.add(globalFun.getDouble((String) buyidAttribute.get("avgPrice"))+k);
+                                suns.add(globalFun.getDouble((String) buyidAttribute.get("avgPrice"))-k);
                             }else{
-                                yings.add(ii-1,this.getDouble((String) buyidAttribute.get("avgPrice"))+k);
-                                suns.add(ii-1,this.getDouble((String) buyidAttribute.get("avgPrice"))-k);
+                                yings.add(ii-1,globalFun.getDouble((String) buyidAttribute.get("avgPrice"))+k);
+                                suns.add(ii-1,globalFun.getDouble((String) buyidAttribute.get("avgPrice"))-k);
                             }
                             recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                             break;
                         }else  if (sellidAllOk){
                             ii--;
-                            yings.add(ii-1,this.getDouble((String)sellidAllAttribute.get("avgPrice"))+k);
-                            suns.add(ii-1,this.getDouble((String)sellidAllAttribute.get("avgPrice"))-k);
+                            yings.add(ii-1,globalFun.getDouble((String)sellidAllAttribute.get("avgPrice"))+k);
+                            suns.add(ii-1,globalFun.getDouble((String)sellidAllAttribute.get("avgPrice"))-k);
                             recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                             break;
                         }
                         try {
                             Thread.sleep(3000);
                         }catch (Exception e){}
-                        newLastPrice = this.lastPrice();
+                        newLastPrice = globalFun.lastPrice();
                     }
                     /*↓ 三级循环2区 ↓*/
                     Boolean ifsuns2 = true;
@@ -345,9 +345,9 @@ public  class FileThreads extends GlobalFun implements Runnable {
                         Boolean sellidOk = false;
                         Boolean buyidOk2 = false;
                         if (newLastPrice>yings.get(ii-1)){
-                            sellid = this.marketCloseBuy(2*a);
+                            sellid = globalFun.marketCloseBuy(2*a);
                             if (positionNew.get("down")!=0.0){
-                                this.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                                globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                             }
                             sellidOk = true;
                             try {
@@ -355,17 +355,17 @@ public  class FileThreads extends GlobalFun implements Runnable {
                             }catch (Exception e){
 
                             }
-                            sellidAttribute = this.come(sellid);
+                            sellidAttribute = globalFun.come(sellid);
                         }else if (newLastPrice<suns.get(ii-1)){
-                            buyid = this.marketBuy(2*a);
-                            this.marketSell(a);
+                            buyid = globalFun.marketBuy(2*a);
+                            globalFun.marketSell(a);
                             buyidOk2 = true;
                             try {
                                 Thread.sleep(15000);
                             }catch (Exception e){
 
                             }
-                            buyidAttribute = this.come(buyid);
+                            buyidAttribute = globalFun.come(buyid);
                         }
                         //如果成交跳出
                         if (sellidOk){
@@ -375,11 +375,11 @@ public  class FileThreads extends GlobalFun implements Runnable {
                         }else if (buyidOk2){
                             ii++;
                             if (yings.size()<=ii-1){
-                                yings.add(this.getDouble((String)buyidAttribute.get("avgPrice"))+k);
-                                suns.add(this.getDouble((String)buyidAttribute.get("avgPrice"))-k);
+                                yings.add(globalFun.getDouble((String)buyidAttribute.get("avgPrice"))+k);
+                                suns.add(globalFun.getDouble((String)buyidAttribute.get("avgPrice"))-k);
                             }else {
-                                yings.add(ii-1,this.getDouble((String)buyidAttribute.get("avgPrice"))+k);
-                                suns.add(ii-1,this.getDouble((String)buyidAttribute.get("avgPrice"))-k);
+                                yings.add(ii-1,globalFun.getDouble((String)buyidAttribute.get("avgPrice"))+k);
+                                suns.add(ii-1,globalFun.getDouble((String)buyidAttribute.get("avgPrice"))-k);
                             }
                             recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                             break;
@@ -387,7 +387,7 @@ public  class FileThreads extends GlobalFun implements Runnable {
                         try {
                             Thread.sleep(3000);
                         }catch (Exception e){}
-                        newLastPrice = this.lastPrice();
+                        newLastPrice = globalFun.lastPrice();
                     }
                 }
             }
@@ -400,13 +400,13 @@ public  class FileThreads extends GlobalFun implements Runnable {
     }
     /*每个线程的的开关控制器*/
     private Boolean getLineIf(){
-        return this.onOffIfThreads.getLineIf().get(this.onOffIfThreads.getThreadLocal().get().get("uuid"));
+        return this.onOffIfThread.getLineIf().get(this.onOffIfThread.getThreadLocal().get().get("uuid"));
     }
     private Double getA(){
-        return (Double) this.onOffIfThreads.getThreadLocal().get().get("a"); //下单额
+        return (Double) this.onOffIfThread.getThreadLocal().get().get("a"); //下单额
     }
     private Double getK(){
-        return (Double) this.onOffIfThreads.getThreadLocal().get().get("k"); //跨度
+        return (Double) this.onOffIfThread.getThreadLocal().get().get("k"); //跨度
     }
     /**
      * 将小数保留小数点后面的位数

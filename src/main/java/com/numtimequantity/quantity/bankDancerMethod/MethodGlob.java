@@ -25,13 +25,7 @@ public class MethodGlob{
     /*币安Api_Key的秘钥*/
     protected String secretkey; //= "lvvxR6ND3DdbEkUa0JE2QgAwVMhpPEPL5K3KUpRKbHn0bXxVNzqN9PXqFV27UDNT";
     private String GUrl = "https://fapi.binance.com";
-
-    @Autowired
-    private GlobalBuyObject globalBuyObject;
-
-    protected RestTemplate getRestTemplate(){
-        return globalBuyObject.getRestTemplate();
-    }
+    protected RestTemplate restTemplate;
 
     /**
      * 签名部分，公共方法类
@@ -62,7 +56,6 @@ public class MethodGlob{
            HttpEntity<String> httpEntity = new HttpEntity<>(dataBody,httpHeaders);
 
            String url = this.GUrl + arguments[0];
-           RestTemplate restTemplate = globalBuyObject.getRestTemplate();
            if(arguments[1].equals("GET")){
                url = url + "?" +dataBody;
                ResponseEntity<T> responseEntity = restTemplate.exchange(URI.create(url), HttpMethod.GET, httpEntity, type);
