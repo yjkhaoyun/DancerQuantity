@@ -2,6 +2,7 @@ package com.numtimequantity.quantity.quantitycontroller;
 
 
 import com.numtimequantity.quantity.fileThread.GlobalBuyObject;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 /**
  * 此类只有管理员可以访问
  */
+@Slf4j
 @Controller
 public class AdminAll {
 
@@ -26,17 +28,16 @@ public class AdminAll {
     @RequestMapping("/settingBuyObject")
     @ResponseBody
     public String settingThreadTicker(){
-        System.out.println(globalBuyObject);
-        System.out.println(globalBuyObject.getBuyObjectThreadIf()); //公共趋势判断函数开关控制
+        /*启动公共趋势函数判断线程*/
         if (globalBuyObject.getBuyObjectThreadIf()){
-            return "指标函数已经在运行了";
+            log.debug("指标函数已经在运行了");
+        }else {
+            globalBuyObject.setBuyObjectThreadIf(true);//设为true才能运行
+            Thread thread = new Thread(globalBuyObject);
+            thread.start();
+            log.debug("公共趋势判断函数线程启动成功{}",globalBuyObject);
         }
-        globalBuyObject.setBuyObjectThreadIf(true);//设为true才能运行
-        System.out.println(globalBuyObject);
 
-        //FileThreads.GlobalTicker globalTicker = new FileThreads.GlobalTicker();
-        Thread thread = new Thread(globalBuyObject);
-        thread.start();
         return "趋势判断函数的公共线程启动成功";
     }
 

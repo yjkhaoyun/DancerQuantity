@@ -4,6 +4,7 @@ package com.numtimequantity.quantity.quantitycontroller;
 import com.numtimequantity.quantity.bankDancerMethod.GlobalFun;
 import com.numtimequantity.quantity.fileThread.BankDancerThread;
 import com.numtimequantity.quantity.fileThread.GlobalBuyObject;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +17,7 @@ import java.util.HashMap;
  * 此类用于控制
  * 量化策略的启动与关闭接口;cpu使用率和折线图接口   四个接口
  */
+@Slf4j
 @Controller
 public class QuantityOpen {
     @Autowired
@@ -76,14 +78,13 @@ public class QuantityOpen {
     }
 
     /**
-     *http://localhost:801/disperse 或者 http://numtime.natapp1.cc:801/disperse
+     *http://localhost:801/disperse
      * @return 分布式接口,返回url和cpu使用率   供中心服务器线程每分钟遍历访问
      */
     @RequestMapping("/disperse")  //注意先启动buyObject线程才能有值
     @ResponseBody
     public Double disperse(){
-        System.out.println("6666666666666666666666");
-
+        log.debug("来到了获取服务器cpu占用率接口");
         return (Double) globalBuyObject.getBuyObject().get("totalCpu");
     }
 

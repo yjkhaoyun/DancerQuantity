@@ -3,6 +3,7 @@ package com.numtimequantity.quantity.quantitycontroller;
 
 import com.google.gson.Gson;
 import com.numtimequantity.quantity.utils.RSAUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.Nullable;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -13,12 +14,13 @@ import java.util.Date;
 import java.util.Map;
 
 /*拦截器，拦截所有请求*/
+@Slf4j
 public class InterceptAll implements HandlerInterceptor {
     //返回是true是方行    返回是false是拦截
     /*拦截器可以判断每一个接口必须含带哪些参数，以及参数的长度，进行拦截*/
     //只检验地址和时间戳
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)  {
-        System.out.println("拦截器!");
+        log.debug("拦截器{}",request.getRequestURI());
         try {
             String contextPat = request.getRequestURI();//访问的路径
             Map<String, String[]> parameterMap = request.getParameterMap();//访问的所有参数键值对
