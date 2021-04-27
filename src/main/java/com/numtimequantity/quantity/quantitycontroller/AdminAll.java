@@ -2,6 +2,7 @@ package com.numtimequantity.quantity.quantitycontroller;
 
 
 import com.numtimequantity.quantity.fileThread.GlobalBuyObject;
+import com.numtimequantity.quantity.fileThread.TopSymbolThread;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,7 +18,8 @@ public class AdminAll {
 
     @Autowired
     GlobalBuyObject globalBuyObject;
-
+    @Autowired
+    TopSymbolThread topSymbolThread;
 
     /**
      * 只执行一次
@@ -37,8 +39,15 @@ public class AdminAll {
             thread.start();
             log.debug("公共趋势判断函数线程启动成功{}",globalBuyObject);
         }
-
-        return "趋势判断函数的公共线程启动成功";
+        if (topSymbolThread.getTopSymbolThreadIf()){
+            log.debug("交易对排行线程已经在运行了");
+        }else {
+            topSymbolThread.setTopSymbolThreadIf(true);//先设为true才能循环运行
+            Thread thread = new Thread(topSymbolThread);
+            thread.start();
+            log.debug("现货交易对排行线程启动成功");
+        }
+        return "两个公共线程启动成功";
     }
 
 }

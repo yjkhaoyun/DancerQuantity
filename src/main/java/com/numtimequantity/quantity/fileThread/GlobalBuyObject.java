@@ -202,11 +202,8 @@ public class GlobalBuyObject  implements Runnable{
         //System.out.println(kRecords2);
         // System.out.println("成交量千万:"+(this.getDouble(kRecords2.get(478).get(7).toString()) * 6.4)/10000000);
         // System.out.println("成交量美元:"+(this.getDouble(kRecords2.get(478).get(7).toString()) ));
-
         //加一个cpu负载和内存的统计
         this.printlnCpuInfo();
-
-
         return this.buyObject;
     }
 
