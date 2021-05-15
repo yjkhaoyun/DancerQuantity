@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -89,12 +90,12 @@ public class TopSymbolThread implements Runnable{
                 * topSymbolInfo.get(i).get("bigVol")//异动时的成交额
                 * */
                 /*测试代码段*/
-                /*for (int k=0;k<topSymbolInfo.size();k++){
+                for (int k=0;k<topSymbolInfo.size();k++){
                     HashMap h = topSymbolInfo.get(k);
                     SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     String time = sf.format(h.get("time"));
                     System.out.println("排名第"+(k+1)+"名币种为:"+h.get("symbol")+" 成交额为:"+h.get("bigVol")+"千万  异动时间为:"+time);
-                }*/
+                }
                 /*测试代码段*/
                     Thread.sleep(60000);
                 this.topSymbolThreadIf=true;
