@@ -207,9 +207,8 @@ public class GlobalBuyObject  implements Runnable{
         return this.buyObject;
     }
 
-    private  void printlnCpuInfo(){
-        try {
-            //System.out.println("----------------cpu信息----------------");
+    private  void printlnCpuInfo(){ //cpu占用的百分比,0.1代表10% 存储到buyObject对象当中
+        try {//System.out.println("----------------cpu信息----------------");
             SystemInfo systemInfo = new SystemInfo();
             CentralProcessor processor = systemInfo.getHardware().getProcessor();
             long[] prevTicks = processor.getSystemCpuLoadTicks();

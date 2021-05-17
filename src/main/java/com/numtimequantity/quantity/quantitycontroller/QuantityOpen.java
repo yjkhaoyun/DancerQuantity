@@ -7,6 +7,7 @@ import com.numtimequantity.quantity.fileThread.GlobalBuyObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -30,27 +31,40 @@ public class QuantityOpen {
      * @param request 传一个uuid
      * @return 开始运行量化程序,支持多线程
      */
-    @RequestMapping("/start")
+    @PostMapping("/start")
     @ResponseBody
     public String oneP(HttpServletRequest request){
-        if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))&&
-                bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
-            System.out.println("打印uuid的状态");
-            return "程序已经在运行中";
-        }else {
-            bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), "", ""));
-            bankDancerThread.setGlobalBuyObject(globalBuyObject);
-            HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put("uuid",request.getParameter("uuid"));
-            hashMap.put("a",request.getParameter("a"));
-            hashMap.put("k",request.getParameter("k"));
-            bankDancerThread.getThreadLocal().set(hashMap);
-            bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),true);
-            Thread thread = new Thread(bankDancerThread);
-            thread.start();
-            return "量化程序开始运行";
-        }
+        System.out.println("上面start方法执行了");
+        try {
+            //这里出现了报错java.lang.ThreadLocal.get()" is null 明天解决20210518
+            if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))&&
+                    bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
+                System.out.println("打印uuid的状态");
+                return "has";//程序已经在运行中
+            }else {
 
+                String apiKey = request.getParameter("apiKey");
+                String secretKey = request.getParameter("secretKey");
+                System.out.println("start方法执行了");
+                System.out.println(apiKey);
+                System.out.println(secretKey);
+                bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey));
+                bankDancerThread.setGlobalBuyObject(globalBuyObject);
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put("uuid",request.getParameter("uuid"));
+                hashMap.put("a",request.getParameter("a"));
+                hashMap.put("k",request.getParameter("k"));
+                bankDancerThread.getThreadLocal().set(hashMap);
+                bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),true);
+                Thread thread = new Thread(bankDancerThread);
+                thread.start();
+                return "ok";//量化程序开始运行
+            }
+        }catch (Exception e){
+            System.out.println("start报错");
+            System.out.println(e);
+        }
+        return null;
     }
 
 

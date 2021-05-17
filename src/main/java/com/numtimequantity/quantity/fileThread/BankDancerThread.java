@@ -27,7 +27,10 @@ public  class BankDancerThread  implements Runnable {
     //线程副本区,父线程给子线程传值,平级线程不可见  一共有三个值   uuid,a和k 比如{uuid:"",a:2.2,k:2.2} 除了能存HashMap,也能存别的格式
     private ThreadLocal<HashMap<String,Object>> threadLocal;
 
-
+    public BankDancerThread(){
+        this.lineThreadIf=new ConcurrentHashMap<>();
+        this.threadLocal=new ThreadLocal<>();
+    }
     /**
      * 把与庄共舞策略搬到这来
      */
