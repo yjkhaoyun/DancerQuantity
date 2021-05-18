@@ -226,13 +226,13 @@ public class GlobalBuyObject  implements Runnable{
             long totalCpu = user + nice + cSys + idle + iowait + irq + softirq + steal;
             Double total = 1.0-(idle * 1.0 / totalCpu);
             this.buyObject.put("totalCpu",total);//cpu占用的百分比,0.1代表10%
-            System.out.println("----------------cpu信息----------------");
+           /* System.out.println("----------------cpu信息----------------");
             System.out.println("cpu核数:" + processor.getLogicalProcessorCount());
             System.out.println("cpu系统使用率:" + new DecimalFormat("#.##%").format(cSys * 1.0 / totalCpu));
             System.out.println("cpu用户使用率:" + new DecimalFormat("#.##%").format(user * 1.0 / totalCpu));
             System.out.println("cpu当前等待率:" + new DecimalFormat("#.##%").format(iowait * 1.0 / totalCpu));
             System.out.println("cpu当前使用率:" + new DecimalFormat("#.##%").format(1.0-(idle * 1.0 / totalCpu)));
-            System.out.println(total);
+            System.out.println(total);*/
         }catch (Exception e){
 
         }

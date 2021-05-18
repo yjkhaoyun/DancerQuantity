@@ -50,7 +50,7 @@ public class QuantityOpen {
                 System.out.println(secretKey);
                 bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey));
                 bankDancerThread.setGlobalBuyObject(globalBuyObject);
-                HashMap<String, Object> hashMap = new HashMap<>();
+                HashMap<String, String> hashMap = new HashMap<>();
                 hashMap.put("uuid",request.getParameter("uuid"));
                 hashMap.put("a",request.getParameter("a"));
                 hashMap.put("k",request.getParameter("k"));
