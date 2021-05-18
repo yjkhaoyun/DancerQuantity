@@ -55,6 +55,8 @@ public class QuantityOpen {
                 hashMap.put("a",request.getParameter("a"));
                 hashMap.put("k",request.getParameter("k"));
                 bankDancerThread.getThreadLocal().set(hashMap);
+                System.out.println("看下这个getThreadLocal得uuid值");
+                System.out.println(bankDancerThread.getThreadLocal().get());
                 bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),true);
                 Thread thread = new Thread(bankDancerThread);
                 thread.start();

@@ -2,6 +2,7 @@ package com.numtimequantity.quantity.fileThread;
 
 
 
+import com.alibaba.ttl.TransmittableThreadLocal;
 import com.numtimequantity.quantity.bankDancerMethod.GlobalFun;
 import lombok.Data;
 import org.springframework.stereotype.Component;
@@ -23,14 +24,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public  class BankDancerThread  implements Runnable {
     private GlobalBuyObject globalBuyObject;//公共趋势判断对象
     private GlobalFun globalFun;
-    private volatile ConcurrentHashMap<String, Boolean> lineThreadIf; //线程开关控制 uuid 和 true||false  HashMap最多可以存1万条数据
+    private volatile ConcurrentHashMap<String, Boolean> lineThreadIf=new ConcurrentHashMap<>(); //线程开关控制 uuid 和 true||false  HashMap最多可以存1万条数据
     //线程副本区,父线程给子线程传值,平级线程不可见  一共有三个值   uuid,a和k 比如{uuid:"",a:2.2,k:2.2} 除了能存HashMap,也能存别的格式
-    private ThreadLocal<HashMap<String,Object>> threadLocal;
+    private ThreadLocal<HashMap<String,Object>> threadLocal=new TransmittableThreadLocal<>();
 
-    public BankDancerThread(){
-        this.lineThreadIf=new ConcurrentHashMap<>();
-        this.threadLocal=new ThreadLocal<>();
-    }
+
     /**
      * 把与庄共舞策略搬到这来
      */
@@ -396,6 +394,8 @@ public  class BankDancerThread  implements Runnable {
     }
     /*每个线程的的开关控制器*/
     private Boolean getLineIf(){
+        System.out.println("看下这个getThreadLocal得map值");
+        System.out.println(this.getThreadLocal().get());
         return this.lineThreadIf.get(this.getThreadLocal().get().get("uuid"));
     }
     private Double getA(){
