@@ -36,32 +36,39 @@ public class QuantityOpen {
     public String oneP(HttpServletRequest request){
         System.out.println("上面start方法执行了");
         try {
-            //这里出现了报错java.lang.ThreadLocal.get()" is null 明天解决20210518
-            if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))&&
-                    bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
-                System.out.println("打印uuid的状态");
-                return "has";//程序已经在运行中
-            }else {
+            if ("0".equals(request.getParameter("quaId"))){//如果是第一个量化策略
+                //如果uuid存在并且值为true则这个量化线程在运行中
+                if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))&&
+                        bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
+                    System.out.println("打印uuid的状态");
+                    return "has";//程序已经在运行中
+                }else {
 
-                String apiKey = request.getParameter("apiKey");
-                String secretKey = request.getParameter("secretKey");
-                System.out.println("start方法执行了");
-                System.out.println(apiKey);
-                System.out.println(secretKey);
-                bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey));
-                bankDancerThread.setGlobalBuyObject(globalBuyObject);
-                HashMap<String, String> hashMap = new HashMap<>();
-                hashMap.put("uuid",request.getParameter("uuid"));
-                hashMap.put("a",request.getParameter("a"));
-                hashMap.put("k",request.getParameter("k"));
-                bankDancerThread.getThreadLocal().set(hashMap);
-                System.out.println("看下这个getThreadLocal得uuid值");
-                System.out.println(bankDancerThread.getThreadLocal().get());
-                bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),true);
-                Thread thread = new Thread(bankDancerThread);
-                thread.start();
-                return "ok";//量化程序开始运行
+                    String apiKey = request.getParameter("apiKey");
+                    String secretKey = request.getParameter("secretKey");
+                    System.out.println("start方法执行了");
+                    System.out.println(apiKey);
+                    System.out.println(secretKey);
+                    bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey));
+                    bankDancerThread.setGlobalBuyObject(globalBuyObject);
+                    HashMap<String, String> hashMap = new HashMap<>();
+                    hashMap.put("uuid",request.getParameter("uuid"));
+                    hashMap.put("a",request.getParameter("a"));
+                    hashMap.put("k",request.getParameter("k"));
+                    bankDancerThread.getThreadLocal().set(hashMap);
+                    System.out.println("看下这个getThreadLocal得uuid值");
+                    System.out.println(bankDancerThread.getThreadLocal().get());
+                    bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),true);
+                    Thread thread = new Thread(bankDancerThread);
+                    thread.start();
+                    return "ok";//量化程序开始运行
+                }
+            }else if ("1".equals(request.getParameter("quaId"))){//如果是第二个量化
+
+            }else if ("2".equals(request.getParameter("quaId"))){//如果是第三个量化
+
             }
+
         }catch (Exception e){
             System.out.println("start报错");
             System.out.println(e);
@@ -80,17 +87,24 @@ public class QuantityOpen {
      */
     @RequestMapping("/closeLine")
     @ResponseBody
-    public String getLine(HttpServletRequest request){
-        if (!bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))){
-            return "请求错误!";//uuid值不存在map中
-        }else if (!bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){
-            return "线程已经处于关闭状态";
-        }else{
-            bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),false);//停止run线程
-            System.out.println("设置完后看下值,线程关闭");
-            System.out.println(bankDancerThread.getLineThreadIf());
-            return "成功关闭量化机器人！";
+    public String closeLine(HttpServletRequest request){
+        if ("0".equals(request.getParameter("quaId"))){//关闭第一个量化策略
+            if (!bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))){
+                return "请求错误!";//uuid值不存在map中
+            }else if (!bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){
+                return "线程已经处于关闭状态";
+            }else{
+                bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),false);//停止run线程
+                System.out.println("设置完后看下值,线程关闭");
+                System.out.println(bankDancerThread.getLineThreadIf());
+                return "ok";//成功关闭量化机器人！
+            }
+        }else if ("1".equals(request.getParameter("quaId"))){//如果是第二个量化
+
+        }else if ("2".equals(request.getParameter("quaId"))){//如果是第三个量化
+
         }
+        return null;
     }
 
     /**
