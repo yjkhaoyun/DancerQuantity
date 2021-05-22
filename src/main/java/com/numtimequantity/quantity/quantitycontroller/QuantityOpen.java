@@ -90,9 +90,9 @@ public class QuantityOpen {
     public String closeLine(HttpServletRequest request){
         if ("0".equals(request.getParameter("quaId"))){//关闭第一个量化策略
             if (!bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))){
-                return "请求错误!";//uuid值不存在map中
+                return "noExist!";//uuid值不存在map中
             }else if (!bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){
-                return "线程已经处于关闭状态";
+                return "exist";
             }else{
                 bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),false);//停止run线程
                 System.out.println("设置完后看下值,线程关闭");
