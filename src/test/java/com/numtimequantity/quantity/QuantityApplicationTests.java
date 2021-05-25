@@ -15,5 +15,7 @@ TopSymbolThread topSymbolThread;
         Thread thread = new Thread(topSymbolThread);
         thread.start();
     }
-
+    @Test
+    void test2(){
+    }
 }

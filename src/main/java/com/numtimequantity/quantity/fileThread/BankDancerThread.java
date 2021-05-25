@@ -25,8 +25,8 @@ public  class BankDancerThread  implements Runnable {
     private GlobalBuyObject globalBuyObject;//公共趋势判断对象
     private GlobalFun globalFun;
     private volatile ConcurrentHashMap<String, Boolean> lineThreadIf=new ConcurrentHashMap<>(); //线程开关控制 uuid 和 true||false  HashMap最多可以存1万条数据
-    private ConcurrentHashMap<String,Integer> quaOutTimeThread =  new ConcurrentHashMap<>();//量化剩余的时长(分钟) 用来控制防止量化超时
-    private ConcurrentHashMap<String,Integer> quaStartTimeThread = new ConcurrentHashMap<>();//量化开始的时间戳
+    private ConcurrentHashMap<String,Integer> quaOutTimeThread =  new ConcurrentHashMap<>();//量化剩余的时长(分钟数) 用来控制防止量化超时
+    private ConcurrentHashMap<String,Long> quaStartTimeThread = new ConcurrentHashMap<>();//量化开始的时间戳
     //线程副本区,父线程给子线程传值,平级线程不可见  一共有三个值   uuid,a和k 比如{uuid:"",a:2.2,k:2.2} 除了能存HashMap,也能存别的格式
     private ThreadLocal<HashMap<String,String>> threadLocal=new TransmittableThreadLocal<>();
 
@@ -390,14 +390,21 @@ public  class BankDancerThread  implements Runnable {
                 }catch (Exception e){}
 
             }
+            this.quaOutTimeThread.remove(this.getThreadLocal().get().get("uuid"));
+            this.quaStartTimeThread.remove(this.getThreadLocal().get().get("uuid"));
+            this.lineThreadIf.remove(this.getThreadLocal().get().get("uuid"));
+            this.threadLocal.remove();
             System.out.println("策略线程被终止");
 
     }
-    /*每个线程的的开关控制器*/
+    /*每个线程的的开关控制器 通过开关控制和超时时间来控制量化线程是否终止  */
     private Boolean getLineIf(){
-        //if (this.lineThreadIf.get(this.getThreadLocal().get().get("uuid"))&&this.quaOutTimeThread){}
-
-        return this.lineThreadIf.get(this.getThreadLocal().get().get("uuid"));
+        String uuid = this.getThreadLocal().get().get("uuid");
+        if (this.lineThreadIf.get(uuid)&&
+                (new Date().getTime()-this.quaStartTimeThread.get(uuid))/1000<this.quaOutTimeThread.get(uuid)){
+            return true;
+        }
+        return false;
     }
     private Double getA(){
         return new BigDecimal(this.getThreadLocal().get().get("a")).doubleValue() ; //下单额

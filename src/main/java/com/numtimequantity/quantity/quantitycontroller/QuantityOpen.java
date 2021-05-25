@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.HashMap;
 
 /**
@@ -43,22 +44,28 @@ public class QuantityOpen {
                     System.out.println("打印uuid的状态");
                     return "has";//程序已经在运行中
                 }else {
-
+                    //量化开始的时间戳
+                    long startTime = new BigDecimal(request.getParameter("startTime")).longValue();
+                    //量化剩余的分钟数
+                    int minute = new BigDecimal(request.getParameter("minute")).intValue();
                     String apiKey = request.getParameter("apiKey");
                     String secretKey = request.getParameter("secretKey");
+                    String uuid = request.getParameter("uuid");
                     System.out.println("start方法执行了");
                     System.out.println(apiKey);
                     System.out.println(secretKey);
                     bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey));
                     bankDancerThread.setGlobalBuyObject(globalBuyObject);
                     HashMap<String, String> hashMap = new HashMap<>();
-                    hashMap.put("uuid",request.getParameter("uuid"));
+                    hashMap.put("uuid",uuid);
                     hashMap.put("a",request.getParameter("a"));
                     hashMap.put("k",request.getParameter("k"));
                     bankDancerThread.getThreadLocal().set(hashMap);
                     System.out.println("看下这个getThreadLocal得uuid值");
                     System.out.println(bankDancerThread.getThreadLocal().get());
-                    bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),true);
+                    bankDancerThread.getLineThreadIf().put(uuid,true);//设定开关控制
+                    bankDancerThread.getQuaOutTimeThread().put(uuid,minute);
+                    bankDancerThread.getQuaStartTimeThread().put(uuid,startTime);
                     Thread thread = new Thread(bankDancerThread);
                     thread.start();
                     return "ok";//量化程序开始运行
