@@ -78,6 +78,9 @@ public  class BankDancerThread  implements Runnable {
                             while (this.getLineIf()){
                                 //buyObject=this.getBuyObject();
                                 System.out.println("策略指标函数的值→→→→→→→→→→→→→→→→→→→→→→→→"+globalBuyObject.getBuyObject());
+                                System.out.println("剩余分钟数");
+                                System.out.println(this.quaOutTimeThread.get(this.getThreadLocal().get().get("uuid")));
+
                                 if((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
                                     break;
                                 }else {

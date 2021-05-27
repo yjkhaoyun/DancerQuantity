@@ -48,10 +48,11 @@ public class InterceptAll implements HandlerInterceptor {
              * 并且也不是"/closeLine"关闭与庄共舞
              * 并且也不是"/earningBDancer"与庄共舞利润或者是账户总额
              * 并且也不是"/earningUni"有你共舞
+             * 并且也不是"/addMinute" 给量化续分数数
              * 则返回false
              */
             if(contextPat.equals("/disperse")||contextPat.equals("/earningBDancer")||contextPat.equals("/earningUni")
-                    ||contextPat.equals("/start")||contextPat.equals("/closeLine")){
+                    ||contextPat.equals("/start")||contextPat.equals("/closeLine")||contextPat.equals("/addMinute")){
                 RSAUtil rsaUtil = new RSAUtil();//解密
                 System.out.println("看下参数");
                 System.out.println(request.getParameter("uuid"));
@@ -61,7 +62,7 @@ public class InterceptAll implements HandlerInterceptor {
                 String priKey = rsaUtil.privateDecrypt(request.getParameter("priKey"),sessPri);
                 System.out.println("解密后的字符串"+priKey);
                 //这里只检验时间戳  如果在五秒以内不超时则拦截器放行
-                if (new Date().getTime()-Long.parseLong(priKey)<5000){
+                if (new Date().getTime()-Long.parseLong(priKey)<15000){
                     System.out.println("拦截器放行");
                     System.out.println(new Date().getTime()-Long.parseLong(priKey));
                     return true;

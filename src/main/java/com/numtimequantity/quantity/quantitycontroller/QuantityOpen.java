@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.HashMap;
 
 /**
@@ -97,7 +98,7 @@ public class QuantityOpen {
     public String closeLine(HttpServletRequest request){
         if ("0".equals(request.getParameter("quaId"))){//关闭第一个量化策略
             if (!bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))){
-                return "noExist!";//uuid值不存在map中
+                return "noExist";//uuid值不存在map中
             }else if (!bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){
                 return "exist";
             }else{
@@ -112,6 +113,35 @@ public class QuantityOpen {
 
         }
         return null;
+    }
+
+    /**
+     *
+     * @return  给量化追加分钟数时长
+     */
+    @RequestMapping("/addMinute")  //注意先启动buyObject线程才能有值
+    @ResponseBody
+    public String addMinute(HttpServletRequest request){
+        String uuid = request.getParameter("uuid");
+        String type = request.getParameter("type");
+        Boolean lineThreadIf = bankDancerThread.getLineThreadIf().containsKey(uuid)?bankDancerThread.getLineThreadIf().get(uuid):false;
+        Long startTime = bankDancerThread.getQuaStartTimeThread().containsKey(uuid)?bankDancerThread.getQuaStartTimeThread().get(uuid):new Date().getTime();
+        Integer outMinute = bankDancerThread.getQuaOutTimeThread().containsKey(uuid)?bankDancerThread.getQuaOutTimeThread().get(uuid):0;
+        //bankDancer追加时长
+        if (type.equals("bank") && lineThreadIf && (new Date().getTime()-startTime)/(1000*60)<outMinute){
+            int minute = new BigDecimal(request.getParameter("minute")).intValue();
+            Integer timeMinute = bankDancerThread.getQuaOutTimeThread().get(uuid);
+            bankDancerThread.getQuaOutTimeThread().put(uuid,timeMinute+minute);
+            return "ok";
+
+        //uniDancer追加时长
+        }else if (type.equals("uni")){
+
+        }else if (type.equals("chain")){
+
+        }
+
+        return "";
     }
 
     /**
