@@ -10,6 +10,7 @@ import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
@@ -188,8 +189,8 @@ public class GlobalBuyObject  implements Runnable{
                     volume<this.getDouble(kRecords2.get(iv).get(7).toString()) * 6.4/10000000 ){
                 volume = this.getDouble(kRecords2.get(iv).get(7).toString()) * 6.4/10000000;
             }
-        }
-        this.buyObject.put("volume",volume);
+        }                           //保留两位小数
+        this.buyObject.put("volume",new BigDecimal(volume).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
         this.buyObject.put("number",okNumber);
         this.buyObject.put("minNumber",minNumber);
         this.buyObject.put("lastNum",15-inum); //最后15分钟(当前的15分钟),1分k线阳线的个数

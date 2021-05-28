@@ -30,6 +30,7 @@ public  class BankDancerThread  implements Runnable {
     //线程副本区,父线程给子线程传值,平级线程不可见  一共有三个值   uuid,a和k 比如{uuid:"",a:2.2,k:2.2} 除了能存HashMap,也能存别的格式
     private ThreadLocal<HashMap<String,String>> threadLocal=new TransmittableThreadLocal<>();
 
+    private HashMap<String,ArrayList> info = new HashMap<>();//折线图的数据
 
     /**
      * 把与庄共舞策略搬到这来
@@ -173,6 +174,10 @@ public  class BankDancerThread  implements Runnable {
                         //打印收益
 
                         myPosition = globalFun.position().get("up");//持仓张数,持仓数量
+                        //存储实际盈亏
+                        String arr[] = {Long.toString(new Date().getTime()),allAccountProfit.toString()};
+                        this.getInfo().get(this.getThreadLocal().get().get("uuid")).add(arr);
+
                         /*↓ 多头情况上下通道下单↓*/
                         if(0 != myPosition && this.getLineIf()){ //
                             if(ii-globalI>0){ //交易一圈回来 ii在后面会变化
@@ -396,7 +401,9 @@ public  class BankDancerThread  implements Runnable {
             this.quaOutTimeThread.remove(this.getThreadLocal().get().get("uuid"));
             this.quaStartTimeThread.remove(this.getThreadLocal().get().get("uuid"));
             this.lineThreadIf.remove(this.getThreadLocal().get().get("uuid"));
+            this.getInfo().remove(this.getThreadLocal().get().get("uuid"));
             this.threadLocal.remove();
+
             System.out.println("策略线程被终止");
 
     }

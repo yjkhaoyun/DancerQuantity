@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -57,6 +59,10 @@ public class QuantityOpen {
                     System.out.println(secretKey);
                     bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey));
                     bankDancerThread.setGlobalBuyObject(globalBuyObject);
+                    ArrayList<String[]> list = new ArrayList<>();
+                    String arr[] = {Long.toString(new Date().getTime()),"0"};//初始化一个字符串数组
+                    list.add(arr);//将指定元素添加到末尾
+                    bankDancerThread.getInfo().put(uuid,list);
                     HashMap<String, String> hashMap = new HashMap<>();
                     hashMap.put("uuid",uuid);
                     hashMap.put("a",request.getParameter("a"));
@@ -153,6 +159,53 @@ public class QuantityOpen {
     public Double disperse(){
         log.debug("来到了获取服务器cpu占用率接口");
         return (Double) globalBuyObject.getBuyObject().get("totalCpu");
+    }
+
+    /**
+     *
+     * @return 查询量化是否开启了  用于手机端查询
+     */
+    @RequestMapping("/selectQuaIf")
+    @ResponseBody
+    public String selectQuaIf(HttpServletRequest request){
+        String quaId = request.getParameter("quaId");
+        String uuid = request.getParameter("uuid");
+        Boolean bankDancerIf = bankDancerThread.getLineThreadIf().containsKey(uuid)?bankDancerThread.getLineThreadIf().get(uuid):false;
+        if ("0".equals(quaId)&&bankDancerIf){//如果是查bankDancer量化
+            return "ok";
+        }else if ("1".equals(quaId)){
+
+        }else if ("2".equals(quaId)){
+
+        }
+        return "no";
+    }
+
+    /**
+     *
+     * @return  查询仪表盘的数据
+     */
+    @RequestMapping("/selectQuantityInfo")
+    @ResponseBody
+    public HashMap selectQuantityInfo(HttpServletRequest request){
+        System.out.println("来到了查询图表接口");
+        String uuid = request.getParameter("uuid");
+        String quaId = request.getParameter("quaId");
+        Boolean bankDancerIf = bankDancerThread.getLineThreadIf().containsKey(uuid)?bankDancerThread.getLineThreadIf().get(uuid):false;
+        if ("0".equals(quaId)&&bankDancerIf){//量化在运行着 并且传过来的参数是"0"
+            HashMap<String, Object> hashMap = new HashMap<>();
+            hashMap.put("last",globalBuyObject.getBuyObject().get("lastNum"));
+            hashMap.put("min",globalBuyObject.getBuyObject().get("minNumber"));
+            hashMap.put("num",globalBuyObject.getBuyObject().get("number"));
+            hashMap.put("vol",globalBuyObject.getBuyObject().get("volume"));
+            hashMap.put("line",bankDancerThread.getInfo().get(uuid));
+            return hashMap;
+        }
+
+
+
+
+        return null;
     }
 
     /**
