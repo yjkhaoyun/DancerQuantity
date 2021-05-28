@@ -40,8 +40,18 @@ public class GlobalBuyObject  implements Runnable{
         this.buyObject=new ConcurrentHashMap();
     }
 
+    /**
+     * 量化策略的所有方法和公共buyObject方法都是用的这个restTemplate来发请求
+     * 如果要设置超时时间请在这里设定
+     * @return  restTemplate
+     */
     public RestTemplate getRestTemplate(){
-        RestTemplate restTemplate = new RestTemplate();
+        /********设置超时时间************/
+        SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
+        simpleClientHttpRequestFactory.setConnectTimeout(3000);//连接主机的超时时间
+        simpleClientHttpRequestFactory.setReadTimeout(3000);//从主机读取数据的超时时间 只设置了ConnectionTimeout没有设置ReadTimeout，结果导致线程卡死。
+        /****************************/
+        RestTemplate restTemplate = new RestTemplate(simpleClientHttpRequestFactory);
         /*以下三句代码为了翻墙，实现访问国外api，打包部署的时候可以删掉*/
         if (this.getHttp_proxy_if()){
             SimpleClientHttpRequestFactory reqfac = new SimpleClientHttpRequestFactory();

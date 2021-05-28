@@ -41,6 +41,8 @@ public  class BankDancerThread  implements Runnable {
             Double account;
             Long time;
             while (this.getLineIf()){//this.runIfMap.get(this.threadLocal.get().get("uuid"))
+                //System.out.println("剩余分钟数");
+                //System.out.println(this.quaOutTimeThread.get(this.getThreadLocal().get().get("uuid")));
                 try {
                     Double a = this.getA();
                     Double k = this.getK();//this.getDouble((String) this.threadLocal.get().get("k"));
@@ -56,13 +58,11 @@ public  class BankDancerThread  implements Runnable {
                     ConcurrentHashMap sellidAttribute=new ConcurrentHashMap();
                     ConcurrentHashMap buyidAttribute=new ConcurrentHashMap();
                     ConcurrentHashMap sellidAllAttribute=new ConcurrentHashMap();
-                    Long marketTime=0L;
                     Long recorderTime=0L;
                     Double newLastPrice;
                     Double myPosition=0.0;
                     Boolean construction = false;
                     Boolean firstIf = true;
-                    ConcurrentHashMap buyObject=null;
 
                     /*存储策略启动时的余额*/
                     System.out.println(globalFun.account());
@@ -77,33 +77,28 @@ public  class BankDancerThread  implements Runnable {
                     while (0.0==myPosition && this.getLineIf()){
                         if(firstIf){
                             while (this.getLineIf()){
-                                //buyObject=this.getBuyObject();
-                                System.out.println("策略指标函数的值→→→→→→→→→→→→→→→→→→→→→→→→"+globalBuyObject.getBuyObject());
-                                System.out.println("剩余分钟数");
-                                System.out.println(this.quaOutTimeThread.get(this.getThreadLocal().get().get("uuid")));
-
-                                if((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
-                                    break;
-                                }else {
-                                    System.out.println("目前为下跌程序");
-                                }
                                 try {
-                                    if (!this.getLineIf()){
+                                    System.out.println("策略指标函数的值→→→→→→→→→→→→→→→→→→→→→→→→"+globalBuyObject.getBuyObject());
+                                    if((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
                                         break;
+                                    }else {
+                                        System.out.println("目前为下跌程序");
                                     }
-                                    Thread.sleep(30000);
-                                    System.out.println("策略内线程名"+Thread.currentThread().getName());
+                                    this.quantitySleep30();//休眠30秒
                                 }catch (Exception e){
+                                    System.out.println("建仓检测循环出现报错");
                                     System.out.println(e);
                                 }
                             }
                             firstIf = false;
                         }
                         construction = true;
+                        //////////////////////////////////
                         if (!this.getLineIf()){
                             break;
                         }
                         if ((int)globalBuyObject.getBuyObject().get("minNumber")>=5){
+                            /******************************************/
                             buyid = globalFun.marketBuy(2*a);//市价开多
                             buyid_ = globalFun.marketSell(a);//市价开空
                             System.out.println("市价追涨");
@@ -193,52 +188,44 @@ public  class BankDancerThread  implements Runnable {
                             }
                             /*循环指标判断程序*/
                             while (this.getLineIf()){
-
-                                try{
-                                    Thread.sleep(20000);
+                                try {
+                                    this.quantitySleep30();//休眠30秒
+                                    newLastPrice = globalFun.lastPrice();
+                                    if (newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
+                                        globalFun.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
+                                    }
+                                    if (suns.get(ii-1)+k-newLastPrice>(suns.get(ii-1)+k)*0.08){ //现价低于止损价x%时止损
+                                        globalFun.marketCloseAllProfit("LONG");//平多头时输入LONG
+                                        System.out.println("触发止损1");
+                                        break;
+                                    }
+                                    if ((Long)globalBuyObject.getBuyObject().get("time")-recorderTime<15*60*1000){//现在时间减去上一次时间大于15分钟
+                                        this.quantitySleep30();//休眠30秒
+                                        this.quantitySleep30();//休眠30秒
+                                    }else if (!(Boolean) globalBuyObject.getBuyObject().get("buyIfOk")){ //如果下单条件不成立则进来看看需不需要止损
+                                        if (ii <=globalI && newLastPrice > ying){
+                                            miniimaxIf = 3; //暂时先让三级循环一区执行此情况
+                                            break;
+                                        }else if (ii > globalI && newLastPrice > yings.get(ii-1)){
+                                            miniimaxIf = 4;
+                                            break;
+                                        }
+                                        this.quantitySleep30();//休眠30秒
+                                    }else if ((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(Double)globalBuyObject.getBuyObject().get("volume")>=3.0){//尝试性操作,8小时符合条件的次数在1次或以上就下单2021年3月7日添加
+                                        if (ii<=globalI){ //初始化仓位时回到三级循环一区
+                                            miniimaxIf = 1;
+                                            break;
+                                        }else {//有额外仓位时 进入三级循环二区
+                                            miniimaxIf = 2;
+                                            break;
+                                        }
+                                    }
+                                    System.out.println("检测时间间隔:"+((Long)globalBuyObject.getBuyObject().get("time")-recorderTime));
                                 }catch (Exception e){
+                                    System.out.println("中间循环检测部分报错");
+                                    System.out.println(e);
+                                }
 
-                                }
-                                newLastPrice = globalFun.lastPrice();
-                                if (newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
-                                    globalFun.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
-                                }
-                                if (suns.get(ii-1)+k-newLastPrice>(suns.get(ii-1)+k)*0.08){ //现价低于止损价x%时止损
-                                    globalFun.marketCloseAllProfit("LONG");//平多头时输入LONG
-                                    System.out.println("触发止损1");
-                                    break;
-                                }
-                                if ((Long)globalBuyObject.getBuyObject().get("time")-recorderTime<15*60*1000){//现在时间减去上一次时间大于15分钟
-                                    try{
-                                        Thread.sleep(60000);
-                                    }catch (Exception e){
-
-                                    }
-                                }else if (!(Boolean) globalBuyObject.getBuyObject().get("buyIfOk")){ //如果下单条件不成立则进来看看需不需要止损
-                                    //8小时内"buyIfOk"为通过的次数小于3次  并且是  初始化仓位   并且  现价比止盈价高
-                                    if (ii <=globalI && newLastPrice > ying){
-                                        miniimaxIf = 3; //暂时先让三级循环一区执行此情况
-                                        break;
-                                    }else if (ii > globalI && newLastPrice > yings.get(ii-1)){
-                                        miniimaxIf = 4;
-                                        break;
-                                    }
-                                    try{
-                                        Thread.sleep(40000);
-                                    }catch (Exception e){
-
-                                    }
-                                }else if ((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(Double)globalBuyObject.getBuyObject().get("volume")>=3.0){//尝试性操作,8小时符合条件的次数在1次或以上就下单2021年3月7日添加
-                                    if (ii<=globalI){ //初始化仓位时回到三级循环一区
-                                        miniimaxIf = 1;
-                                        break;
-                                    }else {//有额外仓位时 进入三级循环二区
-                                        miniimaxIf = 2;
-                                        break;
-                                    }
-                                }
-                                System.out.println("检测时间间隔:"+((Long)globalBuyObject.getBuyObject().get("time")-recorderTime));
-                                System.out.println("策略内线程名"+Thread.currentThread().getName());
                             }
                             if (!this.getLineIf()){
                                 break; //while后面紧跟停止跳出
@@ -290,22 +277,14 @@ public  class BankDancerThread  implements Runnable {
                                     globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                                 }
                                 sellidAllOk = true;
-                                try{
-                                    Thread.sleep(15000);
-                                }catch (Exception e){
-
-                                }
+                                this.quantitySleep30();//休眠30秒
                                 sellidAllAttribute = globalFun.come(sellidAll);
                                 System.out.println("止盈平仓全部 止盈3-1");
                             }else if (newLastPrice < suns.get(ii-1)){
                                 buyid = globalFun.marketBuy(2*a);//市价开多
                                 globalFun.marketSell(a);
                                 buyidOk = true;
-                                try{
-                                    Thread.sleep(15000);
-                                }catch (Exception e){
-
-                                }
+                                this.quantitySleep30();//休眠30秒
                                 buyidAttribute = globalFun.come(buyid);
                                 System.out.println("市价买入 建仓3-1");
                             }
@@ -328,9 +307,7 @@ public  class BankDancerThread  implements Runnable {
                                 recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                                 break;
                             }
-                            try {
-                                Thread.sleep(3000);
-                            }catch (Exception e){}
+                            this.quantitySleep30();//休眠30秒
                             newLastPrice = globalFun.lastPrice();
                         }
                         /*↓ 三级循环2区 ↓*/
@@ -355,21 +332,13 @@ public  class BankDancerThread  implements Runnable {
                                     globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                                 }
                                 sellidOk = true;
-                                try {
-                                    Thread.sleep(15000);
-                                }catch (Exception e){
-
-                                }
+                                this.quantitySleep30();//休眠30秒
                                 sellidAttribute = globalFun.come(sellid);
                             }else if (newLastPrice<suns.get(ii-1)){
                                 buyid = globalFun.marketBuy(2*a);
                                 globalFun.marketSell(a);
                                 buyidOk2 = true;
-                                try {
-                                    Thread.sleep(15000);
-                                }catch (Exception e){
-
-                                }
+                                this.quantitySleep30();//休眠30秒
                                 buyidAttribute = globalFun.come(buyid);
                             }
                             //如果成交跳出
@@ -389,23 +358,21 @@ public  class BankDancerThread  implements Runnable {
                                 recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                                 break;
                             }
-                            try {
-                                Thread.sleep(3000);
-                            }catch (Exception e){}
+                            this.quantitySleep30();//休眠30秒
                             newLastPrice = globalFun.lastPrice();
                         }
                     }
-                }catch (Exception e){}
-
+                }catch (Exception e){
+                    System.out.println("报错程序终止");
+                    System.out.println(e);
+                }
             }
             this.quaOutTimeThread.remove(this.getThreadLocal().get().get("uuid"));
             this.quaStartTimeThread.remove(this.getThreadLocal().get().get("uuid"));
             this.lineThreadIf.remove(this.getThreadLocal().get().get("uuid"));
             this.getInfo().remove(this.getThreadLocal().get().get("uuid"));
             this.threadLocal.remove();
-
             System.out.println("策略线程被终止");
-
     }
     /*每个线程的的开关控制器 通过开关控制和超时时间来控制量化线程是否终止  */
     private Boolean getLineIf(){
@@ -430,6 +397,15 @@ public  class BankDancerThread  implements Runnable {
      */
     public Double getDoubleNum(int m,Double a){
         return new BigDecimal(a).setScale(m, RoundingMode.HALF_DOWN).doubleValue();
+    }
+
+    /**
+     * 休眠30秒
+     */
+    private void quantitySleep30(){
+        try {
+            Thread.sleep(30000);
+        }catch (Exception e){}
     }
 }
 
