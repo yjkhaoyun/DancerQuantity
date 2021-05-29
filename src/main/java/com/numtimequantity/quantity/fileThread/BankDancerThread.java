@@ -97,7 +97,7 @@ public  class BankDancerThread  implements Runnable {
                         }
                         construction = true;
                         //////////////////////////////////
-                        if (!this.getLineIf()){
+                        if (!this.getLineIf()||0.0!=myPosition){
                             System.out.println("第一个跳出程序");
                             break;
                         }
