@@ -76,27 +76,32 @@ public  class BankDancerThread  implements Runnable {
                     /*初始化建仓程序*/
                     while (0.0==myPosition && this.getLineIf()){
                         if(firstIf){
-                            while (this.getLineIf()){
+                            while (this.getLineIf() && 0.0==myPosition){
                                 try {
                                     System.out.println("策略指标函数的值→→→→→→→→→→→→→→→→→→→→→→→→"+globalBuyObject.getBuyObject());
                                     if((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
+                                        System.out.println("初始化检测指标合格,跳出循环");
                                         break;
                                     }else {
                                         System.out.println("目前为下跌程序");
                                     }
                                     this.quantitySleep30();//休眠30秒
+                                    this.quantitySleep30();//休眠30秒
                                 }catch (Exception e){
                                     System.out.println("建仓检测循环出现报错");
                                     System.out.println(e);
                                 }
+                                myPosition = globalFun.position().get("up");
                             }
                             firstIf = false;
                         }
                         construction = true;
                         //////////////////////////////////
                         if (!this.getLineIf()){
+                            System.out.println("第一个跳出程序");
                             break;
                         }
+                        System.out.println("监控第一个跳出程序");
                         if ((int)globalBuyObject.getBuyObject().get("minNumber")>=5){
                             /******************************************/
                             buyid = globalFun.marketBuy(2*a);//市价开多
@@ -118,19 +123,22 @@ public  class BankDancerThread  implements Runnable {
                                 System.out.println("市价成交");
                             }
                         }
-                        try {
-                            Thread.sleep(60000);
-                        }catch (Exception e){
-
-                        }
+                        this.quantitySleep30();//休眠30秒
                         myPosition = globalFun.position().get("up");
-
                     }
                     if (!this.getLineIf()){
+                        System.out.println("第二个调成程序");
                         break; //while后面紧跟停止跳出
                     }
+                    System.out.println("检测第二个跳出程序");
 
-                    recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                    try {
+                        recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                    }catch (Exception e){
+                        System.out.println("时间戳出现报错"+e);
+                        recorderTime = new Date().getTime();
+                    }
+
                     newLastPrice = globalFun.lastPrice();
                     Double newPositionPrice = globalFun.position().get("upPrice");
 
@@ -233,6 +241,13 @@ public  class BankDancerThread  implements Runnable {
                         }else {
                             break;
                         }
+
+
+                        System.out.println("跳出了中间循环检测,并看下跳出的状态");
+                        System.out.println(this.getLineIf());
+                        System.out.println(miniimaxIf);
+
+
                         ConcurrentHashMap<String, Double> positionNew = globalFun.position();//更新最新持仓信息
 
                         if (!this.getLineIf()){
@@ -254,6 +269,8 @@ public  class BankDancerThread  implements Runnable {
                             System.out.println("三级循环四区止盈");
                         }
                         newLastPrice = globalFun.lastPrice();//更新最新价格
+
+                        System.out.println("进入三级循环前打印");
                         /*↓三级循环1区↓*/
                         Boolean ifsuns = true;
                         while (miniimaxIf == 1 && this.getLineIf()){
@@ -377,8 +394,12 @@ public  class BankDancerThread  implements Runnable {
     /*每个线程的的开关控制器 通过开关控制和超时时间来控制量化线程是否终止  */
     private Boolean getLineIf(){
         String uuid = this.getThreadLocal().get().get("uuid");
+        System.out.println("打印控制器的两个值看下 正常上面比下面小为****:");
+        System.out.println((new Date().getTime()-this.quaStartTimeThread.get(uuid))/1000);
+        System.out.println(this.quaOutTimeThread.get(uuid));
+
         if (this.lineThreadIf.get(uuid)&&
-                (new Date().getTime()-this.quaStartTimeThread.get(uuid))/1000<this.quaOutTimeThread.get(uuid)){
+                (new Date().getTime()-this.quaStartTimeThread.get(uuid))/(1000*60)<this.quaOutTimeThread.get(uuid)){
             return true;
         }
         return false;
