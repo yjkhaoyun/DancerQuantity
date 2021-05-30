@@ -126,9 +126,10 @@ public class ActiveMethod extends SpotMethodGlob  {
     /*查询账户余额，返回原始数据*/
     protected HashMap getAccount_(){
         CopyOnWriteArrayList<HashMap> accountList = this.publicM(CopyOnWriteArrayList.class, "/fapi/v2/balance", "GET");
-        System.out.println(accountList.get(0));                                                              //accountList.get(0)是LinkedTreeMap类型 用gson.tojson(map)方法，将LinkedTreeMap对象转成String
-        System.out.println(accountList.get(0).get("balance"));
-        return accountList.get(0);
+        System.out.println("看下获取账户返回的原始值");
+        System.out.println(accountList);                                                              //accountList.get(0)是LinkedTreeMap类型 用gson.tojson(map)方法，将LinkedTreeMap对象转成String
+        System.out.println(accountList.get(1).get("balance"));
+        return accountList.get(1);//  这个usdt的位置可能会变  [{BNB},{USDT},{BUSD}]    20210530
     }
 
     /**

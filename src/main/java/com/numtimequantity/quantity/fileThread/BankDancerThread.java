@@ -65,6 +65,7 @@ public  class BankDancerThread  implements Runnable {
                     Boolean firstIf = true;
 
                     /*存储策略启动时的余额*/
+                    System.out.println("存储启动时的余额");
                     System.out.println(globalFun.account());
                     account = globalFun.account();
                     /*存储策略启动时的时间戳*/
