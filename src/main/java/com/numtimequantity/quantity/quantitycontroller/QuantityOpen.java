@@ -60,8 +60,11 @@ public class QuantityOpen {
                     bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey));
                     bankDancerThread.setGlobalBuyObject(globalBuyObject);
                     ArrayList<String[]> list = new ArrayList<>();
-                    String arr[] = {Long.toString(new Date().getTime()),"0"};//初始化一个字符串数组
+                    String arr[] = {Long.toString(new Date().getTime()),"0"};//初始化一个字符串数组  前端的折线图数据
                     list.add(arr);//将指定元素添加到末尾
+                    /***测试部分 先生成假的数据********************/
+
+                    /******************************************/
                     bankDancerThread.getInfo().put(uuid,list);
                     HashMap<String, String> hashMap = new HashMap<>();
                     hashMap.put("uuid",uuid);
@@ -191,6 +194,8 @@ public class QuantityOpen {
         System.out.println("来到了查询图表接口");
         String uuid = request.getParameter("uuid");
         String quaId = request.getParameter("quaId");
+        String startTime = request.getParameter("startTime");
+        int lineNum = new BigDecimal(request.getParameter("lineNum")).intValue();
         Boolean bankDancerIf = bankDancerThread.getLineThreadIf().containsKey(uuid)?bankDancerThread.getLineThreadIf().get(uuid):false;
         if ("0".equals(quaId)&&bankDancerIf){//量化在运行着 并且传过来的参数是"0"
             HashMap<String, Object> hashMap = new HashMap<>();
@@ -198,13 +203,23 @@ public class QuantityOpen {
             hashMap.put("min",globalBuyObject.getBuyObject().get("minNumber"));
             hashMap.put("num",globalBuyObject.getBuyObject().get("number"));
             hashMap.put("vol",globalBuyObject.getBuyObject().get("volume"));
-            hashMap.put("line",bankDancerThread.getInfo().get(uuid));
+            if (startTime.equals(bankDancerThread.getInfo().get(uuid).get(0)[0])){//如果前端第一根数据跟后端匹配
+                ArrayList<String[]> list = new ArrayList<>();
+                for (int i=0;i<bankDancerThread.getInfo().get(uuid).size()-lineNum;i++){
+                    list.add(bankDancerThread.getInfo().get(uuid).get(lineNum+i));
+                }
+                hashMap.put("line",list);
+                hashMap.put("lineStatus","part");//只传一部分给前端
+                System.out.println("传一部分给前端  打印给前端的值");
+                System.out.println(list);
+            }else {//不匹配则全传过去
+                hashMap.put("line",bankDancerThread.getInfo().get(uuid));
+                hashMap.put("lineStatus","all");
+                System.out.println("全传给前端  打印给前端的值");
+                System.out.println(bankDancerThread.getInfo().get(uuid));
+            }
             return hashMap;
         }
-
-
-
-
         return null;
     }
 
