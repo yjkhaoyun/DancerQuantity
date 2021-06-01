@@ -4,6 +4,7 @@ package com.numtimequantity.quantity.quantitycontroller;
 import com.numtimequantity.quantity.bankDancerMethod.GlobalFun;
 import com.numtimequantity.quantity.fileThread.BankDancerThread;
 import com.numtimequantity.quantity.fileThread.GlobalBuyObject;
+import com.numtimequantity.quantity.fileThread.TopSymbolThread;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -29,6 +30,8 @@ public class QuantityOpen {
     GlobalBuyObject globalBuyObject;
     @Autowired
     BankDancerThread bankDancerThread;
+    @Autowired
+    TopSymbolThread topSymbolThread;
     /**
      *
      *  访问测试连接 http://localhost/start?uuid=jjj&a=0.001&k=50
@@ -222,6 +225,19 @@ public class QuantityOpen {
         }
         return null;
     }
+
+    /**
+     *
+     * @return 查询最近8小时内  分钟阳线最大的成交量 比分钟阴线最大的成交量 大1.3倍的交易对
+     */
+    @RequestMapping("/getTopSymbol")
+    @ResponseBody
+    public ArrayList getTopSymbol(HttpServletRequest request){
+        System.out.println("来到了查询排名接口");
+
+        return topSymbolThread.getTopSymbolList();
+    }
+
 
     /**
      *

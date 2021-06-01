@@ -71,8 +71,10 @@ public class InterceptAll implements HandlerInterceptor {
              * 手机端访问过来的接口 如果访问的是以下接口并且验证通过则返回true
              * "/selectQuaIf"  查询量化是否开启了
              * "/selectQuantityInfo" 折线图和仪表盘数据
+             * "/getTopSymbol"  查询交易对排名接口
              */
-            if (contextPat.equals("/selectQuaIf")||contextPat.equals("/selectQuantityInfo")){
+            if (contextPat.equals("/selectQuaIf")||contextPat.equals("/selectQuantityInfo")
+                    ||contextPat.equals("/getTopSymbol")){
                 RSAUtil rsaUtil = new RSAUtil();//解密
                 String sessPri="MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALTVcZu6yAmwhNwFna/bL0SlJBb0ImI77SC+24qo3pPF40bf9MIH6IQeEpGKowFaMdpWZ4fk//MX4YjNE+1bBC5vnVDwhiuoNTmkH7SR5ryf1oNUMVcAIG/KMHsAEbJzjfhy/iTDaCy92bkIupjJG+aTOZFncnFHo2P3nnhU3O5DAgMBAAECgYAsrvlNo8++JTIPNAwM4jpB2hSa32SHpYsopkCVeLjXBvTsFHbkYxPfYZbxA7LXqLPc4bDfcYSVSvdd2F7uLalQbY8VAbGFvMV1Eals4cwbUjjwhsHZNH3sZ6hmj7LbNXp0450DM3PgfSMSuTdbFp5rQct7iwgD4DtaBj35DM2vIQJBAOXs9ZWk9wUVT5Oi3kMEUtwwTFGoBCmg0N6GbbFGjxrTmaWmQ3bD8uALaALNZlA6haT8SxAm2Qeo/0L4MB/Q7CkCQQDJV0ioRNazEnrRwJ1Y5Cp+f+I4Bp73JANfjuPLJqdnb16sr1GgQCDvvU8XB6fNTfvZTCUiqRo42E58TwgDXZSLAkBpdBbm/XQ2JqIKyoY6In+GcbhvMypFlXZ2uR0SU5RK74XmzazfiduZGmIn9uDYJx8onnYnAEpGEyKQKpiX3xCRAkEAsUq/uxRq7mKObhcrNvQrixq3K9iAsGUw5zte0Suna4iBGJSEzxTJK/JKK6BdHYbXB2BqrtuzMG0gp4u8JaKIwwJADvNypTWM8u2rvC8TcMCnst8mjp87+j1nXFWZQ9CKkydh2clKARNjEe3Sof2c0PeIN59uEX0WSJrAdJ4vKIlPJQ==";
                 System.out.println("看下参数");
