@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
@@ -36,6 +37,8 @@ public class TopSymbolThread implements Runnable{
         if (this.getHttp_proxy_if()){
             SimpleClientHttpRequestFactory reqfac = new SimpleClientHttpRequestFactory();
             reqfac.setProxy(new Proxy(Proxy.Type.HTTP,new InetSocketAddress("127.0.0.1", this.getPort())));
+            reqfac.setConnectTimeout(3000);//连接主机的超时时间
+            reqfac.setReadTimeout(3000);//从主机读取数据的超时时间 只设置了ConnectionTimeout没有设置ReadTimeout，结果导致线程卡死。
             restTemplate.setRequestFactory(reqfac);
         }
         return restTemplate;
@@ -45,38 +48,45 @@ public class TopSymbolThread implements Runnable{
     public void run() {
         while (this.topSymbolThreadIf){
             try {
-                Thread.sleep(6000);
                 String[] split = this.getSymbolStr().split("\\|");
                 ArrayList<HashMap> topSymbol = new ArrayList<>();//用来存每一个交易对的map
                 for (String symbol:split){
-                    HashMap<String, Object> hashMap = new HashMap<>();
-                    ResponseEntity<ArrayList> forEntity = this.getRestTemplate().getForEntity(URI.create("https://api.binance.com/api/v3/klines?symbol=" + symbol + "&interval=1m&limit=480"), ArrayList.class);
-                    List<List> li = forEntity.getBody();
-                    Double volume=0.0;
-                    long time = 0;
-                    Double minVolume=0.0;//用来记录成交量最大的那根阴线的成交量
-                    long minTime = 0;//用来记录时间戳
-                    //选出这个交易对480根k线中成交量最大的那根
-                    for (int i=0;i<479;i++){//不算当前这根,所以是479
-                        List list = li.get(i);
-                        if(this.getDoubleFromStr(list.get(4).toString())-this.getDoubleFromStr(list.get(1).toString())>0
-                            &&volume<this.getDoubleFromStr(list.get(7).toString())*6.4/10000000){
-                            volume=this.getDoubleFromStr(list.get(7).toString())*6.4/10000000;//单位是千万人民币  汇率6.4
-                            time=(long)list.get(0);
+                    try {
+                        Thread.sleep(100);
+                        HashMap<String, Object> hashMap = new HashMap<>();
+                        ResponseEntity<ArrayList> forEntity = this.getRestTemplate().getForEntity(URI.create("https://api.binance.com/api/v3/klines?symbol=" + symbol + "&interval=1m&limit=480"), ArrayList.class);
+                        List<List> li = forEntity.getBody();
+                        Double volume=0.0;
+                        long time = 0;
+                        Double minVolume=0.0;//用来记录成交量最大的那根阴线的成交量
+                        long minTime = 0;//用来记录时间戳
+                        //选出这个交易对480根k线中成交量最大的那根
+                        for (int i=0;i<479;i++){//不算当前这根,所以是479
+                            List list = li.get(i);
+                            if(this.getDoubleFromStr(list.get(4).toString())-this.getDoubleFromStr(list.get(1).toString())>0
+                                    &&volume<this.getDoubleFromStr(list.get(7).toString())*6.4/1000000){
+                                volume=this.getDoubleFromStr(list.get(7).toString())*6.4/1000000;//单位是百万人民币  汇率6.4
+                                time=(long)list.get(0);
+                            }
+                            //选出成交量最大的那根阴线
+                            if(this.getDoubleFromStr(list.get(4).toString())-this.getDoubleFromStr(list.get(1).toString())<0
+                                    &&volume<this.getDoubleFromStr(list.get(7).toString())*6.4/1000000){
+                                minVolume=this.getDoubleFromStr(list.get(7).toString())*6.4/1000000;//单位是百万人民币  汇率6.4
+                                minTime=(long)list.get(0);
+                            }
                         }
-                        //选出成交量最大的那根阴线
-                        if(this.getDoubleFromStr(list.get(4).toString())-this.getDoubleFromStr(list.get(1).toString())<0
-                                &&volume<this.getDoubleFromStr(list.get(7).toString())*6.4/10000000){
-                            minVolume=this.getDoubleFromStr(list.get(7).toString())*6.4/10000000;//单位是千万人民币  汇率6.4
-                            minTime=(long)list.get(0);
-                        }
+                        hashMap.put("bigVol",new BigDecimal(volume).setScale(1, RoundingMode.HALF_DOWN).doubleValue());//将最大的成交量值存进去, 单位百万  四舍五入保留1位小数
+                        /*先不传异动时的时间戳给前端  但时间戳还是非常有用的  未来开发会用到*/
+                        //hashMap.put("time",time);//把发生异动的时间存进去
+                        hashMap.put("minVol",new BigDecimal(minVolume).setScale(1, RoundingMode.HALF_DOWN).doubleValue());//480根k线当中成交量最大的阴线 单位百万 四舍五入保留1位小数
+                        /*先不传异动时的时间戳给前端  但时间戳还是非常有用的  未来开发会用到*/
+                        //hashMap.put("minTime",minTime);//砸盘的时间戳
+                        hashMap.put("symbol",symbol.substring(0,symbol.length()-4));//把币种名称存进去   减掉了后面的"USDT"
+                        topSymbol.add(hashMap);//存储一个完成
+                    }catch (Exception e){
+                        System.out.println("排名线程遍历时出现报错"+e);
                     }
-                    hashMap.put("bigVol",volume);//将最大的成交量值存进去,单位千万
-                    hashMap.put("time",time);//把发生异动的时间存进去
-                    hashMap.put("minVol",minVolume);//480根k线当中成交量最大的阴线
-                    hashMap.put("minTime",minTime);//时间戳
-                    hashMap.put("symbol",symbol);//把交易对名称存进去
-                    topSymbol.add(hashMap);//存储一个完成
+
                 }
                 ArrayList<HashMap> topSymbolInfo = new ArrayList<>();
                 //接下来对topSymbol的成交量进行从大到小排序
@@ -107,17 +117,18 @@ public class TopSymbolThread implements Runnable{
                 * topSymbolInfo.get(i).get("bigVol")//异动时的成交额
                 * */
                 /*测试代码段↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
-                for (int k=0;k<topSymbolInfo.size();k++){
+              /*  for (int k=0;k<topSymbolInfo.size();k++){
                     HashMap h = topSymbolInfo.get(k);
                     SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     String time = sf.format(h.get("time"));
-                    System.out.println("排名第"+(k+1)+"名币种为:"+h.get("symbol")+" 成交额为:"+h.get("bigVol")+"千万  异动时间为:"+time);
-                }
+                    System.out.println("排名第"+(k+1)+"名币种为:"+h.get("symbol")+" 成交额为:"+h.get("bigVol")+"百万  异动时间为:"+time);
+                }*/
                 /*测试代码段↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
-                    Thread.sleep(60000);
                 this.topSymbolThreadIf=true;
+                Thread.sleep(60000);
             }catch (Exception e){
-                log.debug("线程出现报错");
+                log.debug("现货排名线程出现报错");
+                System.out.println(e);
             }
         }
         this.topSymbolThreadIf=false;
