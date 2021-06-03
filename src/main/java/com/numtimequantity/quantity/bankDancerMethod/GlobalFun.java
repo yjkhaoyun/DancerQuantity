@@ -40,7 +40,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
 
 
     /**
-     * 获取最新价
+     * 获取最新价  权重：1  期货每分钟权重上限2400   查询期货权重接口 https://fapi.binance.com/fapi/v1/exchangeInfo
      * @return  最新价格
      */
     @Override
@@ -138,7 +138,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
         return null;
     }
     /**
-     * 获取持仓情况
+     * 获取持仓情况  权重：5  期货每分钟权重上限2400   查询期货权重接口 https://fapi.binance.com/fapi/v1/exchangeInfo
      * @return  up多头持仓数量；upPrice多头持仓成本；down空头持仓数量
      */
     @Override
@@ -157,7 +157,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
     }
 
     /**
-     * 获取期货账户总余额
+     * 获取期货账户总余额  权重：5  期货每分钟权重上限2400   查询期货权重接口 https://fapi.binance.com/fapi/v1/exchangeInfo
      * @return
      */
     @Override
@@ -174,14 +174,13 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
     }
 
     /**
-     * 查询持仓方向
+     * 查询持仓方向 权重：30  期货每分钟权重上限2400   查询期货权重接口 https://fapi.binance.com/fapi/v1/exchangeInfo
      * @return  返回true为双向持仓   false为单向持仓
      */
     @Override
     public Boolean getWay() {
         try {
             ConcurrentHashMap<String,Boolean> way_ = super.getWay_();
-            System.out.println(way_);
             return way_.get("dualSidePosition");
         }catch (Exception e){
             System.out.println("查询持仓方向异常"+e);
@@ -190,6 +189,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
     }
 
     /**
+     *  权重：1  期货每分钟权重上限2400   查询期货权重接口 https://fapi.binance.com/fapi/v1/exchangeInfo
      * 设置持仓方向  设置为双向持仓
      * @return  返回success表示设置成功
      */
@@ -204,6 +204,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
     }
 
     /**
+     * 权重：1  现货每分钟权重上限1200
      * 获取期货合约的订单状态
      * @param orderId
      * @return   order.status为"FILLED"时为已成交,String类型  ;  order.avgPrice 为成交价,String类型的小数
@@ -220,7 +221,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
     }
 
     /**
-     * 参数: 一个参数,时间戳
+     * 参数: 一个参数,时间戳   权重：5  现货每分钟权重上限1200   查询现货权重接口 https://api.binance.com/api/v3/exchangeInfo?symbol=BTCUSDT
      * 返回合约账户的真是余额,用这个真实余额减去几天前的余额就是这几天的实际盈利情况 2021年3月7日添加
      * @return
      */

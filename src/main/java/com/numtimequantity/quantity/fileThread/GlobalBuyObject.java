@@ -67,8 +67,8 @@ public class GlobalBuyObject  implements Runnable{
         while (this.buyObjectThreadIf){
             try {
                 this.buyIf();
-                System.out.println("公共线程"+this.getBuyObject());
-                System.out.println(Thread.currentThread());
+                //System.out.println("公共线程"+this.getBuyObject());
+                //System.out.println(Thread.currentThread());
                 Thread.sleep(30000);
                 this.buyObjectThreadIf=true;
             }catch (Exception e){
@@ -199,7 +199,7 @@ public class GlobalBuyObject  implements Runnable{
                     volume<this.getDouble(kRecords2.get(iv).get(7).toString()) * 6.4/10000000 ){
                 volume = this.getDouble(kRecords2.get(iv).get(7).toString()) * 6.4/10000000;
             }
-        }                           //保留两位小数
+        }                           //保留两位小数  单位千万
         this.buyObject.put("volume",new BigDecimal(volume).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
         this.buyObject.put("number",okNumber);
         this.buyObject.put("minNumber",minNumber);
@@ -245,7 +245,7 @@ public class GlobalBuyObject  implements Runnable{
             System.out.println("cpu当前使用率:" + new DecimalFormat("#.##%").format(1.0-(idle * 1.0 / totalCpu)));
             System.out.println(total);*/
         }catch (Exception e){
-
+            System.out.println(e);
         }
 
 

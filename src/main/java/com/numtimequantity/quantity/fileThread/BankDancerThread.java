@@ -39,15 +39,24 @@ public  class BankDancerThread  implements Runnable {
     public void run() {//通过父线程的    this.runIfMap.get(this.threadLocal.get().get("uuid"))     来控制开关
             int globalI;
             Double account;
-            Long time;
+            Long time;//用于计算存在划转时启动时候的真是余额
+            /*存储策略启动时的余额*/
+            //第1处权重 权重：5  期货每分钟权重上限2400
+            account = globalFun.account();
+            if (account<this.getAcc()){//如果账户真实余额小于前端选择的余额量化就不能开启
+                this.lineThreadIf.put(this.getThreadLocal().get().get("uuid"),false);
+                //System.out.println("打印传过来的acc和账户真实余额");
+               // System.out.println(this.getAcc());
+               // System.out.println(account);
+            }
             while (this.getLineIf()){//this.runIfMap.get(this.threadLocal.get().get("uuid"))
                 //System.out.println("剩余分钟数");
                 //System.out.println(this.quaOutTimeThread.get(this.getThreadLocal().get().get("uuid")));
                 try {
                     Double a = this.getA();
                     Double k = this.getK();//this.getDouble((String) this.threadLocal.get().get("k"));
-                    System.out.println("量化内部的值");
-                    System.out.println("a  "+a+"k  "+k);
+                    //System.out.println("量化内部的值");
+                    //System.out.println("a  "+a+"k  "+k);
                     Double ying = 0.0;
                     Double sun = 0.0;
                     String sellid;
@@ -64,34 +73,30 @@ public  class BankDancerThread  implements Runnable {
                     Boolean construction = false;
                     Boolean firstIf = true;
 
-                    /*存储策略启动时的余额*/
-                    System.out.println("存储启动时的余额");
-                    System.out.println(globalFun.account());
-                    account = globalFun.account();
+
                     /*存储策略启动时的时间戳*/
                     time = new Date().getTime();
-                    /*设置持仓方向为双向持仓*/
-                    if (!globalFun.getWay()){
+                    /*设置持仓方向为双向持仓  查询期货权重接口  */
+                    //第2处权重 权重：1  期货每分钟权重上限2400
+                    try {
                         globalFun.setWay();
-                    }
+                    }catch (Exception e){ }
                     /*初始化建仓程序*/
                     while (0.0==myPosition && this.getLineIf()){
                         if(firstIf){
                             while (this.getLineIf() && 0.0==myPosition){
                                 try {
-                                    System.out.println("策略指标函数的值→→→→→→→→→→→→→→→→→→→→→→→→"+globalBuyObject.getBuyObject());
+                                    //System.out.println("策略指标函数的值→→→→→→→→→→→→→→→→→→→→→→→→"+globalBuyObject.getBuyObject());
                                     if((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
-                                        System.out.println("初始化检测指标合格,跳出循环");
+                                        //System.out.println("初始化检测指标合格,跳出循环");
                                         break;
                                     }else {
-                                        System.out.println("目前为下跌程序");
+                                        //System.out.println("目前为下跌程序");
                                     }
                                     this.quantitySleep30();//休眠30秒
                                     this.quantitySleep30();//休眠30秒
-                                }catch (Exception e){
-                                    System.out.println("建仓检测循环出现报错");
-                                    System.out.println(e);
-                                }
+                                }catch (Exception e){}
+                                //第3处权重 权重：5  期货每分钟权重上限2400
                                 myPosition = globalFun.position().get("up");
                             }
                             firstIf = false;
@@ -99,16 +104,16 @@ public  class BankDancerThread  implements Runnable {
                         construction = true;
                         //////////////////////////////////
                         if (!this.getLineIf()||0.0!=myPosition){
-                            System.out.println("第一个跳出程序");
+                            //System.out.println("第一个跳出程序");
                             break;
                         }
-                        System.out.println("监控第一个跳出程序");
                         if ((int)globalBuyObject.getBuyObject().get("minNumber")>=5){
                             /******************************************/
                             buyid = globalFun.marketBuy(2*a);//市价开多
                             buyid_ = globalFun.marketSell(a);//市价开空
-                            System.out.println("市价追涨");
+                            //System.out.println("市价追涨");
                         }else {
+                            //第4处权重 权重：1  期货每分钟权重上限2400
                             newLastPrice = globalFun.lastPrice();
                             if(sun==0.0){
                                 ying = newLastPrice + k + 1;
@@ -116,33 +121,33 @@ public  class BankDancerThread  implements Runnable {
                             }
                             if (newLastPrice > sun + k ){
                                 sun = newLastPrice - k;
-                                System.out.println("等待下单中,勿追涨...");
+                                //System.out.println("等待下单中,勿追涨...");
                             }
                             if(newLastPrice<sun){
                                 buyid = globalFun.marketBuy(2*a);
                                 buyid_ = globalFun.marketSell(a);
-                                System.out.println("市价成交");
+                                //System.out.println("市价成交");
                             }
                         }
                         this.quantitySleep30();//休眠30秒
+                        this.quantitySleep30();//休眠30秒
+                        //第5处权重 权重：5  期货每分钟权重上限2400
                         myPosition = globalFun.position().get("up");
                     }
                     if (!this.getLineIf()){
-                        System.out.println("第二个调成程序");
                         break; //while后面紧跟停止跳出
                     }
-                    System.out.println("检测第二个跳出程序");
-
                     try {
                         recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                     }catch (Exception e){
-                        System.out.println("时间戳出现报错"+e);
                         recorderTime = new Date().getTime();
                     }
-
+                    //第6处权重 权重：1  期货每分钟权重上限2400
                     newLastPrice = globalFun.lastPrice();
+                    //第7处权重 权重：5  期货每分钟权重上限2400
                     Double newPositionPrice = globalFun.position().get("upPrice");
-
+                    this.quantitySleep30();//休眠30秒
+                    this.quantitySleep30();//休眠30秒
                     ArrayList<Double> yings = new ArrayList<>();
                     ArrayList<Double> suns = new ArrayList<>();
                     int ii;
@@ -171,41 +176,40 @@ public  class BankDancerThread  implements Runnable {
                     /*二级循环*/
                     while (this.getLineIf()){
                         miniimaxIf = 0;
-                        //当前实际盈亏
+                        //当前实际盈亏 第8处权重 权重：5  现货每分钟权重上限1200
                         Double allAccountProfit = this.getDoubleNum(2,globalFun.accountNow(Long.toString(time))-account);//真实余额减去策略启动时的余额等于真实盈亏
-                        System.out.println("收益:"+allAccountProfit+"USDT");
-
-                        //打印收益
-
+                        //System.out.println("收益:"+allAccountProfit+"USDT");
+                        //打印收益    第9处权重 权重：5  期货每分钟权重上限2400
                         myPosition = globalFun.position().get("up");//持仓张数,持仓数量
                         //存储实际盈亏
                         String arr[] = {Long.toString(new Date().getTime()),allAccountProfit.toString()};
                         this.getInfo().get(this.getThreadLocal().get().get("uuid")).add(arr);
 
                         /*↓ 多头情况上下通道下单↓*/
-                        if(0 != myPosition && this.getLineIf()){ //
+                        if(0.0 != myPosition && this.getLineIf()){ //
                             if(ii-globalI>0){ //交易一圈回来 ii在后面会变化
                                 Double averagePrice = 0.0;
                                 for( int i = globalI; i < ii; i++){
                                     averagePrice = averagePrice + yings.get(i-1); //计算每次止盈价的平均值
                                 }
                                 ying = averagePrice/(ii-globalI+1);
-                                System.out.println("循环第: "+(ii-globalI)+"圈"+"ying的值是:"+ying);
+                                //System.out.println("循环第: "+(ii-globalI)+"圈"+"ying的值是:"+ying);
                             }else {
                                 ying = yings.get(ii-1);
-                                System.out.println("快止盈的时候ying的值是:"+ying);
+                                //System.out.println("快止盈的时候ying的值是:"+ying);
                             }
                             /*循环指标判断程序*/
                             while (this.getLineIf()){
                                 try {
                                     this.quantitySleep30();//休眠30秒
+                                    //第10处权重 权重：1  期货每分钟权重上限2400
                                     newLastPrice = globalFun.lastPrice();
                                     if (newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
                                         globalFun.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
                                     }
                                     if (suns.get(ii-1)+k-newLastPrice>(suns.get(ii-1)+k)*0.08){ //现价低于止损价x%时止损
                                         globalFun.marketCloseAllProfit("LONG");//平多头时输入LONG
-                                        System.out.println("触发止损1");
+                                        //System.out.println("触发止损1");
                                         break;
                                     }
                                     if ((Long)globalBuyObject.getBuyObject().get("time")-recorderTime<15*60*1000){//现在时间减去上一次时间大于15分钟
@@ -229,7 +233,7 @@ public  class BankDancerThread  implements Runnable {
                                             break;
                                         }
                                     }
-                                    System.out.println("检测时间间隔:"+((Long)globalBuyObject.getBuyObject().get("time")-recorderTime));
+                                    //System.out.println("检测时间间隔:"+((Long)globalBuyObject.getBuyObject().get("time")-recorderTime));
                                 }catch (Exception e){
                                     System.out.println("中间循环检测部分报错");
                                     System.out.println(e);
@@ -242,15 +246,8 @@ public  class BankDancerThread  implements Runnable {
                         }else {
                             break;
                         }
-
-
-                        System.out.println("跳出了中间循环检测,并看下跳出的状态");
-                        System.out.println(this.getLineIf());
-                        System.out.println(miniimaxIf);
-
-
+                        //第11处权重 权重：5  期货每分钟权重上限2400
                         ConcurrentHashMap<String, Double> positionNew = globalFun.position();//更新最新持仓信息
-
                         if (!this.getLineIf()){
                             break;
                         }
@@ -259,7 +256,6 @@ public  class BankDancerThread  implements Runnable {
                             if (positionNew.get("down")!=0.0){
                                 globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                             }
-                            System.out.println("触发三级三区的止盈");
                             ii--;
                         }else if (miniimaxIf == 4){
                             globalFun.marketCloseBuy(2*a);
@@ -267,11 +263,9 @@ public  class BankDancerThread  implements Runnable {
                                 globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                             }
                             ii--;
-                            System.out.println("三级循环四区止盈");
                         }
+                        //第12处权重 权重：5  期货每分钟权重上限2400
                         newLastPrice = globalFun.lastPrice();//更新最新价格
-
-                        System.out.println("进入三级循环前打印");
                         /*↓三级循环1区↓*/
                         Boolean ifsuns = true;
                         while (miniimaxIf == 1 && this.getLineIf()){
@@ -295,16 +289,14 @@ public  class BankDancerThread  implements Runnable {
                                     globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
                                 }
                                 sellidAllOk = true;
-                                this.quantitySleep30();//休眠30秒
+                                //第13处权重 权重：1  期货每分钟权重上限2400
                                 sellidAllAttribute = globalFun.come(sellidAll);
-                                System.out.println("止盈平仓全部 止盈3-1");
                             }else if (newLastPrice < suns.get(ii-1)){
                                 buyid = globalFun.marketBuy(2*a);//市价开多
                                 globalFun.marketSell(a);
                                 buyidOk = true;
-                                this.quantitySleep30();//休眠30秒
+                                //并列第13处权重 权重：1  期货每分钟权重上限2400
                                 buyidAttribute = globalFun.come(buyid);
-                                System.out.println("市价买入 建仓3-1");
                             }
                             /*判断两个订单状态*/
                             if (buyidOk){
@@ -325,6 +317,8 @@ public  class BankDancerThread  implements Runnable {
                                 recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                                 break;
                             }
+                            this.quantitySleep30();//休眠30秒
+                            this.quantitySleep30();//休眠30秒
                             this.quantitySleep30();//休眠30秒
                             newLastPrice = globalFun.lastPrice();
                         }
@@ -377,12 +371,13 @@ public  class BankDancerThread  implements Runnable {
                                 break;
                             }
                             this.quantitySleep30();//休眠30秒
+                            this.quantitySleep30();//休眠30秒
                             newLastPrice = globalFun.lastPrice();
                         }
                     }
                 }catch (Exception e){
-                    System.out.println("报错程序终止");
-                    System.out.println(e);
+                    //System.out.println("报错程序终止");
+                    //System.out.println(e);
                 }
             }
             this.quaOutTimeThread.remove(this.getThreadLocal().get().get("uuid"));
@@ -390,14 +385,14 @@ public  class BankDancerThread  implements Runnable {
             this.lineThreadIf.remove(this.getThreadLocal().get().get("uuid"));
             this.getInfo().remove(this.getThreadLocal().get().get("uuid"));
             this.threadLocal.remove();
-            System.out.println("策略线程被终止");
+            //System.out.println("策略线程被终止");
     }
-    /*每个线程的的开关控制器 通过开关控制和超时时间来控制量化线程是否终止  */
+    /*每个线程的的开关控制器  这里包含了量化是否过期 通过开关控制和超时时间来控制量化线程是否终止  */
     private Boolean getLineIf(){
         String uuid = this.getThreadLocal().get().get("uuid");
-        System.out.println("打印控制器的两个值看下 正常上面比下面小为****:");
-        System.out.println((new Date().getTime()-this.quaStartTimeThread.get(uuid))/1000);
-        System.out.println(this.quaOutTimeThread.get(uuid));
+        //System.out.println("打印控制器的两个值看下 正常上面比下面小为****:");
+       // System.out.println((new Date().getTime()/1000-this.quaStartTimeThread.get(uuid))/1000);
+       // System.out.println(this.quaOutTimeThread.get(uuid));
 
         if (this.lineThreadIf.get(uuid)&&
                 (new Date().getTime()-this.quaStartTimeThread.get(uuid))/(1000*60)<this.quaOutTimeThread.get(uuid)){
@@ -411,6 +406,10 @@ public  class BankDancerThread  implements Runnable {
     private Double getK(){
         return new BigDecimal(this.getThreadLocal().get().get("k")).doubleValue() ; //跨度
     }
+    private Double getAcc(){
+        return new BigDecimal(this.getThreadLocal().get().get("acc")).doubleValue() ; //跨度
+    }
+
     /**
      * 将小数保留小数点后面的位数
      * @param m  小数点后面的位数

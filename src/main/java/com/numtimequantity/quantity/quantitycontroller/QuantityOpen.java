@@ -41,13 +41,12 @@ public class QuantityOpen {
     @PostMapping("/start")
     @ResponseBody
     public String oneP(HttpServletRequest request){
-        System.out.println("上面start方法执行了");
+        //System.out.println("上面start方法执行了");
         try {
             if ("0".equals(request.getParameter("quaId"))){//如果是第一个量化策略
                 //如果uuid存在并且值为true则这个量化线程在运行中
                 if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))&&
                         bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
-                    System.out.println("打印uuid的状态");
                     return "has";//程序已经在运行中
                 }else {
                     //量化开始的时间戳
@@ -56,11 +55,15 @@ public class QuantityOpen {
                     int minute = new BigDecimal(request.getParameter("minute")).intValue();
                     String apiKey = request.getParameter("apiKey");
                     String secretKey = request.getParameter("secretKey");
+                    String a = request.getParameter("a");
+                    String k = request.getParameter("k");
+                    String acc = request.getParameter("acc");//前端传过来的  开启量化时选择的金额 500u 1000u ...
                     String uuid = request.getParameter("uuid");
-                    System.out.println("start方法执行了");
-                    System.out.println(apiKey);
-                    System.out.println(secretKey);
-                    bankDancerThread.setGlobalFun(new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey));
+                    GlobalFun globalFun = new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey);
+                    double dou_K = new BigDecimal(k).doubleValue();//传过来的k是个百分数   比如1.5就是百分之1.5
+                    //获取最新价   使用了权重1点
+                    String strK = Double.toString(globalFun.lastPrice() * dou_K / 100);//比如传过来的是1.5，k就是btc价格*1.5%
+                    bankDancerThread.setGlobalFun(globalFun);
                     bankDancerThread.setGlobalBuyObject(globalBuyObject);
                     ArrayList<String[]> list = new ArrayList<>();
                     String arr[] = {Long.toString(new Date().getTime()),"0"};//初始化一个字符串数组  前端的折线图数据
@@ -71,14 +74,15 @@ public class QuantityOpen {
                     bankDancerThread.getInfo().put(uuid,list);
                     HashMap<String, String> hashMap = new HashMap<>();
                     hashMap.put("uuid",uuid);
-                    hashMap.put("a",request.getParameter("a"));
-                    hashMap.put("k",request.getParameter("k"));
+                    hashMap.put("a",a);
+                    hashMap.put("k",strK);
+                    hashMap.put("acc",acc);
                     bankDancerThread.getThreadLocal().set(hashMap);
-                    System.out.println("看下这个getThreadLocal得uuid值");
-                    System.out.println(bankDancerThread.getThreadLocal().get());
+                    //System.out.println("看下这个getThreadLocal得uuid值");
+                    //System.out.println(bankDancerThread.getThreadLocal().get());
                     bankDancerThread.getLineThreadIf().put(uuid,true);//设定开关控制
-                    bankDancerThread.getQuaOutTimeThread().put(uuid,minute);
-                    bankDancerThread.getQuaStartTimeThread().put(uuid,startTime);
+                    bankDancerThread.getQuaOutTimeThread().put(uuid,minute);//量化剩余的分钟数
+                    bankDancerThread.getQuaStartTimeThread().put(uuid,startTime);//量化开始的时间戳
                     Thread thread = new Thread(bankDancerThread);
                     thread.start();
                     return "ok";//量化程序开始运行
@@ -90,8 +94,6 @@ public class QuantityOpen {
             }
 
         }catch (Exception e){
-            System.out.println("start报错");
-            System.out.println(e);
         }
         return null;
     }
@@ -115,8 +117,6 @@ public class QuantityOpen {
                 return "exist";
             }else{
                 bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),false);//停止run线程
-                System.out.println("设置完后看下值,线程关闭");
-                System.out.println(bankDancerThread.getLineThreadIf());
                 return "ok";//成功关闭量化机器人！
             }
         }else if ("1".equals(request.getParameter("quaId"))){//如果是第二个量化
@@ -194,7 +194,6 @@ public class QuantityOpen {
     @RequestMapping("/selectQuantityInfo")
     @ResponseBody
     public HashMap selectQuantityInfo(HttpServletRequest request){
-        System.out.println("来到了查询图表接口");
         String uuid = request.getParameter("uuid");
         String quaId = request.getParameter("quaId");
         String startTime = request.getParameter("startTime");
@@ -213,13 +212,9 @@ public class QuantityOpen {
                 }
                 hashMap.put("line",list);
                 hashMap.put("lineStatus","part");//只传一部分给前端
-                System.out.println("传一部分给前端  打印给前端的值");
-                System.out.println(list);
             }else {//不匹配则全传过去
                 hashMap.put("line",bankDancerThread.getInfo().get(uuid));
                 hashMap.put("lineStatus","all");
-                System.out.println("全传给前端  打印给前端的值");
-                System.out.println(bankDancerThread.getInfo().get(uuid));
             }
             return hashMap;
         }
@@ -233,8 +228,6 @@ public class QuantityOpen {
     @RequestMapping("/getTopSymbol")
     @ResponseBody
     public ArrayList getTopSymbol(HttpServletRequest request){
-        System.out.println("来到了查询排名接口");
-
         return topSymbolThread.getTopSymbolList();
     }
 

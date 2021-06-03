@@ -52,7 +52,6 @@ public class TopSymbolThread implements Runnable{
                 ArrayList<HashMap> topSymbol = new ArrayList<>();//用来存每一个交易对的map
                 for (String symbol:split){
                     try {
-                        Thread.sleep(100);
                         HashMap<String, Object> hashMap = new HashMap<>();
                         ResponseEntity<ArrayList> forEntity = this.getRestTemplate().getForEntity(URI.create("https://api.binance.com/api/v3/klines?symbol=" + symbol + "&interval=1m&limit=480"), ArrayList.class);
                         List<List> li = forEntity.getBody();
@@ -125,7 +124,7 @@ public class TopSymbolThread implements Runnable{
                 }*/
                 /*测试代码段↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
                 this.topSymbolThreadIf=true;
-                Thread.sleep(60000);
+                Thread.sleep(60*1000*10);
             }catch (Exception e){
                 log.debug("现货排名线程出现报错");
                 System.out.println(e);
