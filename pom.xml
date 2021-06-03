@@ -43,42 +43,11 @@
             <version>2.8.0</version>
         </dependency>
 
-        <!--MySql数据库驱动-->
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-        </dependency>
-        <!--JDBC启动器的依赖，开启后自动使用追光者连接池-->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc</artifactId>
-        </dependency>
-
-        <!--Mybatis通用Mapper-->
-        <dependency>
-            <groupId>tk.mybatis</groupId>
-            <artifactId>mapper-spring-boot-starter</artifactId>
-            <version>2.1.5</version>
-        </dependency>
-
-        <!--德鲁伊的依赖-->
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>druid-spring-boot-starter</artifactId>
-            <version>1.1.22</version>
-        </dependency>
-
         <!--父线程向子线程传值 局域线程副本-->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>transmittable-thread-local</artifactId>
             <version>2.11.4</version>
-        </dependency>
-        <!--        编码解码工具,验证码使用-->
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.9</version>
         </dependency>
 
         <!--注释处理器,在使用ConfigurationProperties注解时springboot提示让添加此依赖-->
