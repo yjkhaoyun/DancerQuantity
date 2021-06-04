@@ -158,13 +158,16 @@ public class QuantityOpen {
 
     /**
      *http://localhost:801/disperse
-     * @return 分布式接口,返回url和cpu使用率   供中心服务器线程每分钟遍历访问
+     * @return 分布式接口,返回url和cpu使用率 和服务器运行了多少个量化  供中心服务器线程每分钟遍历访问
      */
     @RequestMapping("/disperse")  //注意先启动buyObject线程才能有值
     @ResponseBody
-    public Double disperse(){
+    public HashMap disperse(){
         log.debug("来到了获取服务器cpu占用率接口");
-        return (Double) globalBuyObject.getBuyObject().get("totalCpu");
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("tCpu",globalBuyObject.getBuyObject().get("totalCpu"));//cpu的使用率
+        hashMap.put("qNum",bankDancerThread.getLineThreadIf().size());//这台服务器运行量化的数量数
+        return hashMap;
     }
 
     /**

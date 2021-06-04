@@ -134,6 +134,8 @@ public  class BankDancerThread  implements Runnable {
                         //第5处权重 权重：5  期货每分钟权重上限2400
                         myPosition = globalFun.position().get("up");
                     }
+                    this.quantitySleep30();//休眠30秒
+                    this.quantitySleep30();//休眠30秒
                     if (!this.getLineIf()){
                         break; //while后面紧跟停止跳出
                     }
@@ -181,6 +183,8 @@ public  class BankDancerThread  implements Runnable {
                         //System.out.println("收益:"+allAccountProfit+"USDT");
                         //打印收益    第9处权重 权重：5  期货每分钟权重上限2400
                         myPosition = globalFun.position().get("up");//持仓张数,持仓数量
+                        this.quantitySleep30();//休眠30秒
+                        this.quantitySleep30();//休眠30秒
                         //存储实际盈亏
                         String arr[] = {Long.toString(new Date().getTime()),allAccountProfit.toString()};
                         this.getInfo().get(this.getThreadLocal().get().get("uuid")).add(arr);
@@ -264,7 +268,8 @@ public  class BankDancerThread  implements Runnable {
                             }
                             ii--;
                         }
-                        //第12处权重 权重：5  期货每分钟权重上限2400
+
+                        //第12处权重 权重：1  期货每分钟权重上限2400
                         newLastPrice = globalFun.lastPrice();//更新最新价格
                         /*↓三级循环1区↓*/
                         Boolean ifsuns = true;
@@ -345,11 +350,13 @@ public  class BankDancerThread  implements Runnable {
                                 }
                                 sellidOk = true;
                                 this.quantitySleep30();//休眠30秒
+                                this.quantitySleep30();//休眠30秒
                                 sellidAttribute = globalFun.come(sellid);
                             }else if (newLastPrice<suns.get(ii-1)){
                                 buyid = globalFun.marketBuy(2*a);
                                 globalFun.marketSell(a);
                                 buyidOk2 = true;
+                                this.quantitySleep30();//休眠30秒
                                 this.quantitySleep30();//休眠30秒
                                 buyidAttribute = globalFun.come(buyid);
                             }
