@@ -5,6 +5,7 @@ package com.numtimequantity.quantity.fileThread;
 import com.alibaba.ttl.TransmittableThreadLocal;
 import com.numtimequantity.quantity.bankDancerMethod.GlobalFun;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 1.将线程类加入spring容器,在开启线程前先给属性赋值进行初始化
  * 2.创建线程类对象时利用构造函数传参,让线程的属性享受bean中的公共变量
  */
+@Slf4j
 @Data
 @Component
 public  class BankDancerThread  implements Runnable {
@@ -95,7 +97,9 @@ public  class BankDancerThread  implements Runnable {
                                     }
                                     this.quantitySleep30();//休眠30秒
                                     this.quantitySleep30();//休眠30秒
-                                }catch (Exception e){}
+                                }catch (Exception e){
+                                    log.info("初始化建仓循环检测指标处报错{}",e);
+                                }
                                 //第3处权重 权重：5  期货每分钟权重上限2400
                                 myPosition = globalFun.position().get("up");
                             }
@@ -143,6 +147,7 @@ public  class BankDancerThread  implements Runnable {
                         recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                     }catch (Exception e){
                         recorderTime = new Date().getTime();
+                        log.info("获取公共指标函数的时间戳强制转成Long类型时报错{}",e);
                     }
                     //第6处权重 权重：1  期货每分钟权重上限2400
                     newLastPrice = globalFun.lastPrice();
@@ -206,6 +211,7 @@ public  class BankDancerThread  implements Runnable {
                             while (this.getLineIf()){
                                 try {
                                     this.quantitySleep30();//休眠30秒
+                                    this.quantitySleep30();//休眠30秒
                                     //第10处权重 权重：1  期货每分钟权重上限2400
                                     newLastPrice = globalFun.lastPrice();
                                     if (newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
@@ -239,8 +245,7 @@ public  class BankDancerThread  implements Runnable {
                                     }
                                     //System.out.println("检测时间间隔:"+((Long)globalBuyObject.getBuyObject().get("time")-recorderTime));
                                 }catch (Exception e){
-                                    System.out.println("中间循环检测部分报错");
-                                    System.out.println(e);
+                                    log.info("中间循环检测部分报错,忽略继续循环{}",e);
                                 }
 
                             }
@@ -383,8 +388,7 @@ public  class BankDancerThread  implements Runnable {
                         }
                     }
                 }catch (Exception e){
-                    //System.out.println("报错程序终止");
-                    //System.out.println(e);
+                    log.info("报错 量化程序终止{}",e);
                 }
             }
             this.quaOutTimeThread.remove(this.getThreadLocal().get().get("uuid"));

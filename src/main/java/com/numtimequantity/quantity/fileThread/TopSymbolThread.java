@@ -83,7 +83,7 @@ public class TopSymbolThread implements Runnable{
                         hashMap.put("symbol",symbol.substring(0,symbol.length()-4));//把币种名称存进去   减掉了后面的"USDT"
                         topSymbol.add(hashMap);//存储一个完成
                     }catch (Exception e){
-                        System.out.println("排名线程遍历时出现报错"+e);
+                        log.info("排名线程遍历交易对时出现报错{}",e);
                     }
 
                 }
@@ -126,8 +126,7 @@ public class TopSymbolThread implements Runnable{
                 this.topSymbolThreadIf=true;
                 Thread.sleep(60*1000*10);
             }catch (Exception e){
-                log.debug("现货排名线程出现报错");
-                System.out.println(e);
+                log.info("现货排名线程出现报错{}",e);
             }
         }
         this.topSymbolThreadIf=false;

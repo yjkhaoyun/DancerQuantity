@@ -94,6 +94,7 @@ public class QuantityOpen {
             }
 
         }catch (Exception e){
+            log.info("开启量化时报错{}",e);
         }
         return null;
     }
@@ -107,9 +108,10 @@ public class QuantityOpen {
      * @param request  关闭与庄共舞量化线程
      * @return 关闭量化程序线程 (用户关闭自己的量化策略程序)
      */
-    @RequestMapping("/closeLine")
+    @PostMapping("/closeLine")
     @ResponseBody
     public String closeLine(HttpServletRequest request){
+        log.debug("来到了关闭线程接口");
         if ("0".equals(request.getParameter("quaId"))){//关闭第一个量化策略
             if (!bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))){
                 return "noExist";//uuid值不存在map中
@@ -131,7 +133,7 @@ public class QuantityOpen {
      *
      * @return  给量化追加分钟数时长
      */
-    @RequestMapping("/addMinute")  //注意先启动buyObject线程才能有值
+    @PostMapping("/addMinute")  //注意先启动buyObject线程才能有值
     @ResponseBody
     public String addMinute(HttpServletRequest request){
         String uuid = request.getParameter("uuid");
@@ -160,13 +162,17 @@ public class QuantityOpen {
      *http://localhost:801/disperse
      * @return 分布式接口,返回url和cpu使用率 和服务器运行了多少个量化  供中心服务器线程每分钟遍历访问
      */
-    @RequestMapping("/disperse")  //注意先启动buyObject线程才能有值
+    @PostMapping("/disperse")  //注意先启动buyObject线程才能有值
     @ResponseBody
     public HashMap disperse(){
-        log.debug("来到了获取服务器cpu占用率接口");
         HashMap<String, Object> hashMap = new HashMap<>();
-        hashMap.put("tCpu",globalBuyObject.getBuyObject().get("totalCpu"));//cpu的使用率
+        if (globalBuyObject.getBuyObject().get("totalCpu")==null){
+            hashMap.put("tCpu",0.0);//cpu的使用率
+        }else {
+            hashMap.put("tCpu",globalBuyObject.getBuyObject().get("totalCpu"));//cpu的使用率
+        }
         hashMap.put("qNum",bankDancerThread.getLineThreadIf().size());//这台服务器运行量化的数量数
+        log.debug("来到了获取服务器cpu占用率接口{}",hashMap);
         return hashMap;
     }
 
@@ -174,7 +180,7 @@ public class QuantityOpen {
      *
      * @return 查询量化是否开启了  用于手机端查询
      */
-    @RequestMapping("/selectQuaIf")
+    @PostMapping("/selectQuaIf")
     @ResponseBody
     public String selectQuaIf(HttpServletRequest request){
         String quaId = request.getParameter("quaId");
@@ -194,7 +200,7 @@ public class QuantityOpen {
      *
      * @return  查询仪表盘的数据
      */
-    @RequestMapping("/selectQuantityInfo")
+    @PostMapping("/selectQuantityInfo")
     @ResponseBody
     public HashMap selectQuantityInfo(HttpServletRequest request){
         String uuid = request.getParameter("uuid");
@@ -228,7 +234,7 @@ public class QuantityOpen {
      *
      * @return 查询最近8小时内  分钟阳线最大的成交量 比分钟阴线最大的成交量 大1.3倍的交易对
      */
-    @RequestMapping("/getTopSymbol")
+    @PostMapping("/getTopSymbol")
     @ResponseBody
     public ArrayList getTopSymbol(HttpServletRequest request){
         return topSymbolThread.getTopSymbolList();
@@ -239,7 +245,7 @@ public class QuantityOpen {
      *
      * @return 与庄共舞收益图
      */
-    @RequestMapping("/earningBDancer")
+    @PostMapping("/earningBDancer")
     @ResponseBody
     public HashMap earningBDancer(){
         return null;
@@ -249,7 +255,7 @@ public class QuantityOpen {
      *
      * @return 有你共舞收益图
      */
-    @RequestMapping("/earningUni")
+    @PostMapping("/earningUni")
     @ResponseBody
     public HashMap earningUni(){
         return null;

@@ -1,6 +1,7 @@
 package com.numtimequantity.quantity.fileThread;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 @ConfigurationProperties(prefix = "httpsetting")
 @Component
 @Data
+@Slf4j
 public class GlobalBuyObject  implements Runnable{
     private Boolean http_proxy_if;//是否开启http代理,本地开发测试时开启,因为需要翻墙,部署的时候关闭就行了
     private int port;//如果开启http代理,http端口号,根据自己的翻墙软件来定
@@ -69,11 +71,10 @@ public class GlobalBuyObject  implements Runnable{
                 this.buyIf();
                 //System.out.println("公共线程"+this.getBuyObject());
                 //System.out.println(Thread.currentThread());
-                Thread.sleep(30000);
+                Thread.sleep(60000);
                 this.buyObjectThreadIf=true;
             }catch (Exception e){
-
-                System.out.println(e);
+                log.info("公共趋势判断函数正常循环时报错{}",e);
             }
         }
         this.buyObjectThreadIf=false;
@@ -106,7 +107,7 @@ public class GlobalBuyObject  implements Runnable{
      * 封装数据方法
      * @return  返回行情判断对象
      */
-    public ConcurrentHashMap buyIf(){
+    public void buyIf(){
         //System.out.println("执行了buyIf()这个方法");
         this.buyObject.clear();
 
@@ -175,8 +176,6 @@ public class GlobalBuyObject  implements Runnable{
             for(int iik6=0;iik6<5;iik6++){
                 rFive[2]=rFive[2]+(this.getDouble(kRecords2.get(i-5+iik6).get(4).toString())-this.getDouble(kRecords2.get(i-5+iik6).get(1).toString()));
             }
-            //成交量 亿人民币
-
             //综合条件判断满足条件总次数  在统计8小时的时候把 hours <0 加上了,统计当前时不加
             if (rFive[0]<0 || rFive[1]<0 || rFive[2]<0 ||
                     inum>5 || sum<zhangfu ||!volumeIf||
@@ -210,12 +209,9 @@ public class GlobalBuyObject  implements Runnable{
                 hours2 <0 || hours3<0){
             this.buyObject.put("buyIfOk",false);//当前是否合格 合格返回true
         }
-        //System.out.println(kRecords2);
-        // System.out.println("成交量千万:"+(this.getDouble(kRecords2.get(478).get(7).toString()) * 6.4)/10000000);
-        // System.out.println("成交量美元:"+(this.getDouble(kRecords2.get(478).get(7).toString()) ));
-        //加一个cpu负载和内存的统计
-        this.printlnCpuInfo();
-        return this.buyObject;
+        this.printlnCpuInfo();//加一个cpu负载和内存的统计
+        log.debug("成交量千万:"+(this.getDouble(kRecords2.get(478).get(7).toString()) * 6.4)/10000000);
+        log.debug("看下公共指标函数对象的值{}",this.buyObject);
     }
 
     private  void printlnCpuInfo(){ //cpu占用的百分比,0.1代表10% 存储到buyObject对象当中
@@ -245,9 +241,7 @@ public class GlobalBuyObject  implements Runnable{
             System.out.println("cpu当前使用率:" + new DecimalFormat("#.##%").format(1.0-(idle * 1.0 / totalCpu)));
             System.out.println(total);*/
         }catch (Exception e){
-            System.out.println(e);
+            log.info("检测cpu使用率时异常{}",e);
         }
-
-
     }
 }

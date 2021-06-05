@@ -31,10 +31,12 @@ public class InterceptAll implements HandlerInterceptor {
             if (contextPat.equals("/settingBuyObject")&&request.getParameter("cccccc").equals("dddddd")){
                 return true;
             }
-
             //测试的
             if (contextPat.equals("/disperse")){
-                return true;
+                if ("abcdefg".equals(request.getParameter("password"))){
+                    log.debug("获取cpu使用率接口通过");
+                    return true;
+                }
             }
             /********************************************************************************/
             //如果没有"privkey"参数 或者 "privKey"参数为空   则返回false   "privKey"就是加密的时间戳
@@ -92,13 +94,10 @@ public class InterceptAll implements HandlerInterceptor {
 
             return false;
         }catch (Exception e){
-            System.out.println("错误信息"+e);
-
+            log.info("拦截器处出现异常{}",e);
         }
-        System.out.println("拦截器拦截");
         return false;
     }
-
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable ModelAndView modelAndView) throws Exception {
     }
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, @Nullable Exception ex) throws Exception {

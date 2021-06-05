@@ -3,6 +3,7 @@ package com.numtimequantity.quantity.bankDancerMethod;
 
 
 import com.numtimequantity.quantity.bankDancerInterface.ImplBankDancer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 public class GlobalFun extends ActiveMethod implements ImplBankDancer {
     /*构造方法，传入两个key的值*/
     public GlobalFun(RestTemplate restTemplate, String api_key, String secretkey){
@@ -49,7 +51,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             ConcurrentHashMap concurrentHashMap = super.lastPrice_();
             return new BigDecimal(concurrentHashMap.get("price").toString()).doubleValue();
         }catch (Exception e){
-            System.out.println("获取最新价异常");
+            log.info("获取最新价异常{}",e);
         }
         return null;
     }
@@ -76,7 +78,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             ConcurrentHashMap concurrentHashMap = super.marketBuy_(a);
             return this.getStrLong(concurrentHashMap.get("orderId").toString());
         }catch (Exception e){
-            System.out.println("开多时异常"+e);
+            log.info("开多时异常{}",e);
         }
         return null;
     }
@@ -92,7 +94,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             ConcurrentHashMap concurrentHashMap = super.marketSell_(a);
             return this.getStrLong(concurrentHashMap.get("orderId").toString());
         }catch (Exception e){
-            System.out.println("开空时异常"+e);
+            log.info("开空时异常{}",e);
         }
         return null;
     }
@@ -108,7 +110,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             ConcurrentHashMap concurrentHashMap = super.maketCloseBuy_(aNum);
             return this.getStrLong(concurrentHashMap.get("orderId").toString());
         }catch (Exception e){
-            System.out.println("平多时异常"+e);
+            log.info("平多时异常{}",e);
         }
         return null;
     }
@@ -133,7 +135,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             }
             return super.marketCloseAllProfit_(orientation,p,positionSide);
         }catch (Exception e){
-            System.out.println("市价平仓全部时异常"+e);
+            log.info("市价平仓全部时异常{}",e);
         }
         return null;
     }
@@ -151,7 +153,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             concurrentHashMap.put("down",new BigDecimal(positionNum_.get(1).get("positionAmt").toString()).doubleValue()* (-1));
             return concurrentHashMap;
         }catch (Exception e){
-            System.out.println("获取持仓异常"+e);
+            log.info("获取持仓异常{}",e);
         }
         return null;
     }
@@ -168,7 +170,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             double balance2 = new BigDecimal(account_.get("crossUnPnl").toString()).doubleValue();
             return balance1+balance2;
         }catch (Exception e){
-            System.out.println("获取当前合约余额异常"+e);
+            log.info("获取当前合约余额异常{}",e);
         }
         return null;
     }
@@ -183,7 +185,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             ConcurrentHashMap<String,Boolean> way_ = super.getWay_();
             return way_.get("dualSidePosition");
         }catch (Exception e){
-            System.out.println("查询持仓方向异常"+e);
+            log.info("查询持仓方向异常{}",e);
         }
         return null;
     }
@@ -198,7 +200,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
         try {
             return super.setWay_();
         }catch (Exception e){
-            System.out.println("设置持仓方向异常"+e);
+            log.info("设置持仓方向异常,这个异常是很正常的{}",e);
         }
         return null;
     }
@@ -216,6 +218,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             return super.getOrder(orderId);
         }catch (Exception e){
             System.out.println("获取订单状态失败"+e);
+            log.info("获取订单状态时出现异常{}",e);
         }
         return null;
     }
@@ -241,7 +244,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             }
             return account;
         }catch (Exception e){
-            System.out.println("获取合约真实余额异常");
+            log.info("获取合约真实余额时异常{}",e);
         }
         return null;
     }
