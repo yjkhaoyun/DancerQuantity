@@ -50,8 +50,8 @@ public class GlobalBuyObject  implements Runnable{
     public RestTemplate getRestTemplate(){
         /********设置超时时间************/
         SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
-        simpleClientHttpRequestFactory.setConnectTimeout(3000);//连接主机的超时时间
-        simpleClientHttpRequestFactory.setReadTimeout(3000);//从主机读取数据的超时时间 只设置了ConnectionTimeout没有设置ReadTimeout，结果导致线程卡死。
+        simpleClientHttpRequestFactory.setConnectTimeout(5000);//连接主机的超时时间
+        simpleClientHttpRequestFactory.setReadTimeout(6000);//从主机读取数据的超时时间 只设置了ConnectionTimeout没有设置ReadTimeout，结果导致线程卡死。
         /****************************/
         RestTemplate restTemplate = new RestTemplate(simpleClientHttpRequestFactory);
         /*以下三句代码为了翻墙，实现访问国外api，打包部署的时候可以删掉*/
@@ -71,7 +71,7 @@ public class GlobalBuyObject  implements Runnable{
                 this.buyIf();
                 //System.out.println("公共线程"+this.getBuyObject());
                 //System.out.println(Thread.currentThread());
-                Thread.sleep(60000);
+                Thread.sleep(60500);
                 this.buyObjectThreadIf=true;
             }catch (Exception e){
                 log.info("公共趋势判断函数正常循环时报错{}",e);

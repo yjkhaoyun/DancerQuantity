@@ -207,15 +207,18 @@ public  class BankDancerThread  implements Runnable {
                                 ying = yings.get(ii-1);
                                 //System.out.println("快止盈的时候ying的值是:"+ying);
                             }
+
                             /*循环指标判断程序*/
+                            Boolean closeAllDownIf = true;//用来控制下面的平全部空仓程序只执行一次
                             while (this.getLineIf()){
                                 try {
                                     this.quantitySleep30();//休眠30秒
                                     this.quantitySleep30();//休眠30秒
                                     //第10处权重 权重：1  期货每分钟权重上限2400
                                     newLastPrice = globalFun.lastPrice();
-                                    if (newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
+                                    if (closeAllDownIf&&newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
                                         globalFun.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
+                                        closeAllDownIf=false;//用来控制这里的平全部空仓程序只执行一次  有时空仓可能没有仓位，所以允许一次容错
                                     }
                                     if (suns.get(ii-1)+k-newLastPrice>(suns.get(ii-1)+k)*0.08){ //现价低于止损价x%时止损
                                         globalFun.marketCloseAllProfit("LONG");//平多头时输入LONG
@@ -436,7 +439,7 @@ public  class BankDancerThread  implements Runnable {
      */
     private void quantitySleep30(){
         try {
-            Thread.sleep(30000);
+            Thread.sleep(35000);//休眠35秒
         }catch (Exception e){}
     }
 }
