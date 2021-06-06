@@ -68,10 +68,10 @@ public class GlobalBuyObject  implements Runnable{
     public void run() {
         while (this.buyObjectThreadIf){
             try {
+                Thread.sleep(60500);//将休眠写在前面，以免报错时出现死循环
                 this.buyIf();
                 //System.out.println("公共线程"+this.getBuyObject());
                 //System.out.println(Thread.currentThread());
-                Thread.sleep(60500);
                 this.buyObjectThreadIf=true;
             }catch (Exception e){
                 log.info("公共趋势判断函数正常循环时报错{}",e);

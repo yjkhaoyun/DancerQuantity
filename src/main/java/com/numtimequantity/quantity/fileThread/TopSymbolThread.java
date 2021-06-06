@@ -48,6 +48,7 @@ public class TopSymbolThread implements Runnable{
     public void run() {
         while (this.topSymbolThreadIf){
             try {
+                Thread.sleep(60*1000*10);//将休眠写在前面，以免报错时出现死循环
                 String[] split = this.getSymbolStr().split("\\|");
                 ArrayList<HashMap> topSymbol = new ArrayList<>();//用来存每一个交易对的map
                 for (String symbol:split){
@@ -124,7 +125,6 @@ public class TopSymbolThread implements Runnable{
                 }*/
                 /*测试代码段↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
                 this.topSymbolThreadIf=true;
-                Thread.sleep(60*1000*10);
             }catch (Exception e){
                 log.info("现货排名线程出现报错{}",e);
             }
