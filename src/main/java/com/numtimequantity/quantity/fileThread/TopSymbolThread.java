@@ -15,6 +15,7 @@ import java.net.Proxy;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -48,7 +49,7 @@ public class TopSymbolThread implements Runnable{
     public void run() {
         while (this.topSymbolThreadIf){
             try {
-                Thread.sleep(60*1000*10);//将休眠写在前面，以免报错时出现死循环
+                Thread.sleep(60*1000*1);//将休眠写在前面，以免报错时出现死循环
                 String[] split = this.getSymbolStr().split("\\|");
                 ArrayList<HashMap> topSymbol = new ArrayList<>();//用来存每一个交易对的map
                 for (String symbol:split){
@@ -77,7 +78,7 @@ public class TopSymbolThread implements Runnable{
                         }
                         hashMap.put("bigVol",new BigDecimal(volume).setScale(1, RoundingMode.HALF_DOWN).doubleValue());//将最大的成交量值存进去, 单位百万  四舍五入保留1位小数
                         /*先不传异动时的时间戳给前端  但时间戳还是非常有用的  未来开发会用到*/
-                        //hashMap.put("time",time);//把发生异动的时间存进去
+                        hashMap.put("time",time);//把发生异动的时间存进去
                         hashMap.put("minVol",new BigDecimal(minVolume).setScale(1, RoundingMode.HALF_DOWN).doubleValue());//480根k线当中成交量最大的阴线 单位百万 四舍五入保留1位小数
                         /*先不传异动时的时间戳给前端  但时间戳还是非常有用的  未来开发会用到*/
                         //hashMap.put("minTime",minTime);//砸盘的时间戳
@@ -85,12 +86,14 @@ public class TopSymbolThread implements Runnable{
                         topSymbol.add(hashMap);//存储一个完成
                     }catch (Exception e){
                         log.info("排名线程遍历交易对时出现报错{}",e);
+
                     }
 
                 }
                 ArrayList<HashMap> topSymbolInfo = new ArrayList<>();
                 //接下来对topSymbol的成交量进行从大到小排序
                 int size = topSymbol.size();
+                log.debug("在交易对排序前看下，整理好的交易对列表的数量是多少size{}",size);
                 for (int index=0;index<size;index++){
                     Double maxVol=0.0;//标记最大值
                     int num = 0; //标记最大值map在list当中的索引
@@ -100,16 +103,13 @@ public class TopSymbolThread implements Runnable{
                             num=del;//记录索引值
                         }
                     }
-                    //如果成交量最大的阳线的量除以成交量最大的阴线的成交量大于1.3倍 则把这个交易对存起来
-                    if ((Double)topSymbol.get(num).get("bigVol")/(Double)topSymbol.get(num).get("minVol")>1.1){
-                        //遍历完得到最大值和索引
-                        topSymbolInfo.add(topSymbol.get(num));//按顺序放入最大的值  添加值末尾
-                        topSymbol.remove(num);//删掉选出来的索引
-                    }
+                    //遍历完得到最大值和索引
+                    topSymbolInfo.add(topSymbol.get(num));//按顺序放入最大的值  添加值末尾
+                    topSymbol.remove(num);//删掉选出来的索引
                 }
-                this.topSymbolList.clear();//先清空
-                this.topSymbolList=topSymbolInfo;//再赋值
-                log.debug("排序好交易对为{}",topSymbolInfo);
+            //
+            //    this.topSymbolList=topSymbolInfo;//再赋值
+            //    log.debug("排序好交易对为{}",topSymbolInfo);
                 /*
                 * topSymbolInfo.get(i)中的数据:
                 * topSymbolInfo.get(i).get("symbol")//交易对名称
@@ -117,13 +117,27 @@ public class TopSymbolThread implements Runnable{
                 * topSymbolInfo.get(i).get("bigVol")//异动时的成交额
                 * */
                 /*测试代码段↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
-              /*  for (int k=0;k<topSymbolInfo.size();k++){
+               /* for (int k=0;k<topSymbolInfo.size();k++){
                     HashMap h = topSymbolInfo.get(k);
                     SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     String time = sf.format(h.get("time"));
                     System.out.println("排名第"+(k+1)+"名币种为:"+h.get("symbol")+" 成交额为:"+h.get("bigVol")+"百万  异动时间为:"+time);
                 }*/
                 /*测试代码段↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
+                //选出比例是1.3倍的值，如果成交量最大的阳线的量除以成交量最大的阴线的成交量大于1.1倍 则把这个交易对存起来
+                this.topSymbolList.clear();//先清空
+                for (int iv=0;iv<topSymbolInfo.size();iv++){
+                    Double theBigVol = (Double)topSymbolInfo.get(iv).get("bigVol");
+                    Double theMinVol = (Double)topSymbolInfo.get(iv).get("minVol");
+                    long theTime = (long) topSymbolInfo.get(iv).get("time");
+                    //买入除以卖出大于1.3倍 并且 买入大于500万  并且  已经过去一小时了
+                    if (theBigVol/theMinVol>1.3&&theBigVol>5&&new Date().getTime()-theTime>1000*60*60){
+                        this.topSymbolList.add(topSymbolInfo.get(iv));//存起来
+                        log.debug("龙虎榜合格数据为{}",topSymbolInfo.get(iv));
+                    }
+                }
+                log.debug("打印最终龙虎榜数据：{}",this.topSymbolList);
                 this.topSymbolThreadIf=true;
             }catch (Exception e){
                 log.info("现货排名线程出现报错{}",e);

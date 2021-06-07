@@ -15,7 +15,6 @@ import java.math.RoundingMode;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -51,7 +50,7 @@ public class GlobalBuyObject  implements Runnable{
         /********设置超时时间************/
         SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
         simpleClientHttpRequestFactory.setConnectTimeout(5000);//连接主机的超时时间
-        simpleClientHttpRequestFactory.setReadTimeout(6000);//从主机读取数据的超时时间 只设置了ConnectionTimeout没有设置ReadTimeout，结果导致线程卡死。
+        simpleClientHttpRequestFactory.setReadTimeout(10000);//从主机读取数据的超时时间 只设置了ConnectionTimeout没有设置ReadTimeout，结果导致线程卡死。
         /****************************/
         RestTemplate restTemplate = new RestTemplate(simpleClientHttpRequestFactory);
         /*以下三句代码为了翻墙，实现访问国外api，打包部署的时候可以删掉*/
@@ -127,11 +126,14 @@ public class GlobalBuyObject  implements Runnable{
         Double hours3 = 0.0;
         Double[] rFive = {0.0,0.0,0.0};
         Boolean volumeIf = false;
+
         //取当前价格的千分之5作为一个常数
-        Double zhangfu = this.getDouble(kRecords2.get(0).get(4).toString())/1000 * 5;
+        Double zhangfu = new BigDecimal(kRecords2.get(0).get(4).toString()).doubleValue()/1000 * 5;
         //System.out.println("打印涨幅:"+zhangfu);
 
-        for (int i=180;i<480;i++){
+        Double divisionA=0.0;//计算比例用的
+        Double divisionB=0.0;
+        for (int i=180;i<kRecords2.size();i++){
             sum=0.0;
             inum=0;
             hours=0.0;
@@ -144,65 +146,74 @@ public class GlobalBuyObject  implements Runnable{
             volumeIf = false;
             //15分钟涨幅和15分内1分钟k线阴线的个数
             for (int ik=0;ik<15;ik++){
-                sum=sum+(this.getDouble(kRecords2.get(i-15+ik).get(4).toString())-this.getDouble(kRecords2.get(i-15+ik).get(1).toString()));
-                if (this.getDouble(kRecords2.get(i-15+ik).get(4).toString())-this.getDouble(kRecords2.get(i-15+ik).get(1).toString())<0){
+                Double kValue = new BigDecimal(kRecords2.get(i-15+ik).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i-15+ik).get(1).toString()).doubleValue();
+                sum=sum+(kValue);
+                if (kValue<0){
                     //15分钟内1分钟k的阴线个数
                     inum++;
                 }
                 //如果有1根阳线k线的成交量大于3千万人民币 (美元汇率按6.4) 则条件改为true
-                if (this.getDouble(kRecords2.get(i-15+ik).get(7).toString()) * 6.4>30000000 &&
-                        this.getDouble(kRecords2.get(i-15+ik).get(4).toString())-this.getDouble(kRecords2.get(i-15+ik).get(1).toString())>0){
+                if (new BigDecimal(kRecords2.get(i-15+ik).get(7).toString()).doubleValue() * 6.4>30000000 &&kValue>0){
                     volumeIf = true;
                 }
             }
             //两根1小时k线
             for(int iik=0;iik<60;iik++){//1小时k第二根为阳线
-                hours=hours+(this.getDouble(kRecords2.get(i-120+iik).get(4).toString())-this.getDouble(kRecords2.get(i-120+iik).get(1).toString()));
+                hours=hours+(new BigDecimal(kRecords2.get(i-120+iik).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i-120+iik).get(1).toString()).doubleValue());
+
             }
-            for(int iik2=0;iik2<120;iik2++){//第一根两小时k为阳线
-                hours2=hours2+(this.getDouble(kRecords2.get(i-180+iik2).get(4).toString())-this.getDouble(kRecords2.get(i-180+iik2).get(1).toString()));
+            for(int iik2=60;iik2<120;iik2++){//第一根两小时k为阳线
+                hours2=hours2+(new BigDecimal(kRecords2.get(i-180+iik2).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i-180+iik2).get(1).toString()).doubleValue());
             }
             //两小时k线涨幅
             for (int iik3=0;iik3<120;iik3++){
-                hours=hours3+(this.getDouble(kRecords2.get(i-120+iik3).get(4).toString())-this.getDouble(kRecords2.get(i-120+iik3).get(1).toString()));
-            }
-            //三根五分钟k线
-            for (int iik4=0;iik4<5;iik4++){
-                rFive[0]=rFive[0]+(this.getDouble(kRecords2.get(i-15+iik4).get(4).toString())-this.getDouble(kRecords2.get(i-15+iik4).get(1).toString()));
-            }
-            for (int iik5=0;iik5<5;iik5++){
-                rFive[1]=rFive[1]+(this.getDouble(kRecords2.get(i-10+iik5).get(4).toString())-this.getDouble(kRecords2.get(i-10+iik5).get(1).toString()));
-            }
-            for(int iik6=0;iik6<5;iik6++){
-                rFive[2]=rFive[2]+(this.getDouble(kRecords2.get(i-5+iik6).get(4).toString())-this.getDouble(kRecords2.get(i-5+iik6).get(1).toString()));
+                hours=hours3+(new BigDecimal(kRecords2.get(i-120+iik3).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i-120+iik3).get(1).toString()).doubleValue());
             }
             //综合条件判断满足条件总次数  在统计8小时的时候把 hours <0 加上了,统计当前时不加
-            if (rFive[0]<0 || rFive[1]<0 || rFive[2]<0 ||
-                    inum>5 || sum<zhangfu ||!volumeIf||
+            if (inum>5 || sum<zhangfu ||!volumeIf||
                     hours <0 || hours2<0 || hours3<0){
-                verdict=true;
-            }
-            if (!verdict){
+            }else {
+
                 okNumber++;
             }
-            if (inum<=5 && i<480-15){
+            if (inum<=5 && i<kRecords2.size()-15){
                 i=i+14;
                 minNumber++;
+            }
+            //计算比例用的
+            if (new BigDecimal(kRecords2.get(i).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i).get(1).toString()).doubleValue()>0){
+                divisionA=divisionA+new BigDecimal(kRecords2.get(i).get(7).toString()).doubleValue();//收阳的成交量
+            }else {
+                divisionB=divisionB+new BigDecimal(kRecords2.get(i).get(7).toString()).doubleValue();//收阴的成交量
             }
         }
 
         //最近这15根1分钟k线,成交量最大的这根阳线成交量是多少,单位人民币千万,美元汇率按6.4(不算正在发生这根)
         Double volume = 0.0;
-        for(int iv=464;iv<479;iv++){
-            if (this.getDouble(kRecords2.get(iv).get(4).toString())-this.getDouble(kRecords2.get(iv).get(1).toString())>0 &&
-                    volume<this.getDouble(kRecords2.get(iv).get(7).toString()) * 6.4/10000000 ){
-                volume = this.getDouble(kRecords2.get(iv).get(7).toString()) * 6.4/10000000;
+        for(int iv=kRecords2.size()-1-15;iv<kRecords2.size()-1;iv++){
+            if (new BigDecimal(kRecords2.get(iv).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(iv).get(1).toString()).doubleValue()>0 &&
+                    volume<new BigDecimal(kRecords2.get(iv).get(7).toString()).doubleValue() * 6.4/10000000 ){
+                volume = new BigDecimal(kRecords2.get(iv).get(7).toString()).doubleValue() * 6.4/10000000;
             }
-        }                           //保留两位小数  单位千万
+        }
+        //成交量单位:千万
+        log.debug("volume{}",new BigDecimal(volume).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
+        log.debug("number{}",okNumber);
+        log.debug("minNumber{}",minNumber);
+        log.debug("lastNum{}",(15-inum));
+        log.debug("看下近8小时的多空比例值,如果这个值大于1说明多头{}",divisionA/divisionB);
+
+        if (rFive[0]<0 || rFive[1]<0 || rFive[2]<0 ||
+                inum>5 || sum < zhangfu ||
+                hours2 <0 || hours3<0){
+            //System.out.println("现在是否合格:false");
+        }
+        //保留两位小数  单位千万
         this.buyObject.put("volume",new BigDecimal(volume).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
         this.buyObject.put("number",okNumber);
         this.buyObject.put("minNumber",minNumber);
         this.buyObject.put("lastNum",15-inum); //最后15分钟(当前的15分钟),1分k线阳线的个数
+        this.buyObject.put("division",divisionA/divisionB);//近8小时的多空比例值,如果这个值大于1说明多头
 
         if (rFive[0]<0 || rFive[1]<0 || rFive[2]<0 ||
                 inum>5 || sum < zhangfu ||
@@ -210,7 +221,6 @@ public class GlobalBuyObject  implements Runnable{
             this.buyObject.put("buyIfOk",false);//当前是否合格 合格返回true
         }
         this.printlnCpuInfo();//加一个cpu负载和内存的统计
-        log.debug("成交量千万:"+(this.getDouble(kRecords2.get(478).get(7).toString()) * 6.4)/10000000);
         log.debug("看下公共指标函数对象的值{}",this.buyObject);
     }
 
