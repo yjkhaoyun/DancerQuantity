@@ -108,13 +108,7 @@ public class GlobalBuyObject  implements Runnable{
      */
     public void buyIf(){
         //System.out.println("执行了buyIf()这个方法");
-        this.buyObject.clear();
 
-        this.buyObject.put("buyIfOk",true);
-        this.buyObject.put("time",new Date().getTime());
-        this.buyObject.put("number",0);//8小时内合格的次数
-        this.buyObject.put("minNumber",0);//8小时内15分钟阴线1分k占9根以上的个数
-        this.buyObject.put("lastNum",0);//lastNum
         //
         List<List> kRecords2 = this.kRecords2();
         int okNumber = 0;
@@ -124,7 +118,6 @@ public class GlobalBuyObject  implements Runnable{
         Double hours = 0.0;
         Double hours2 = 0.0;
         Double hours3 = 0.0;
-        Double[] rFive = {0.0,0.0,0.0};
         Boolean volumeIf = false;
 
         //取当前价格的千分之5作为一个常数
@@ -137,12 +130,7 @@ public class GlobalBuyObject  implements Runnable{
             sum=0.0;
             inum=0;
             hours=0.0;
-            hours2=0.0;
             hours3=0.0;
-            rFive[0]=0.0;
-            rFive[1]=0.0;
-            rFive[2]=0.0;
-            Boolean verdict = false;
             volumeIf = false;
             //15分钟涨幅和15分内1分钟k线阴线的个数
             for (int ik=0;ik<15;ik++){
@@ -162,18 +150,14 @@ public class GlobalBuyObject  implements Runnable{
                 hours=hours+(new BigDecimal(kRecords2.get(i-120+iik).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i-120+iik).get(1).toString()).doubleValue());
 
             }
-            for(int iik2=60;iik2<120;iik2++){//第一根两小时k为阳线
-                hours2=hours2+(new BigDecimal(kRecords2.get(i-180+iik2).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i-180+iik2).get(1).toString()).doubleValue());
-            }
             //两小时k线涨幅
             for (int iik3=0;iik3<120;iik3++){
-                hours=hours3+(new BigDecimal(kRecords2.get(i-120+iik3).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i-120+iik3).get(1).toString()).doubleValue());
+                hours3=hours3+(new BigDecimal(kRecords2.get(i-120+iik3).get(4).toString()).doubleValue()-new BigDecimal(kRecords2.get(i-120+iik3).get(1).toString()).doubleValue());
             }
             //综合条件判断满足条件总次数  在统计8小时的时候把 hours <0 加上了,统计当前时不加
             if (inum>5 || sum<zhangfu ||!volumeIf||
-                    hours <0 || hours2<0 || hours3<0){
+                     hours<0 || hours3<0){
             }else {
-
                 okNumber++;
             }
             if (inum<=5 && i<kRecords2.size()-15){
@@ -187,7 +171,6 @@ public class GlobalBuyObject  implements Runnable{
                 divisionB=divisionB+new BigDecimal(kRecords2.get(i).get(7).toString()).doubleValue();//收阴的成交量
             }
         }
-
         //最近这15根1分钟k线,成交量最大的这根阳线成交量是多少,单位人民币千万,美元汇率按6.4(不算正在发生这根)
         Double volume = 0.0;
         for(int iv=kRecords2.size()-1-15;iv<kRecords2.size()-1;iv++){
@@ -196,6 +179,7 @@ public class GlobalBuyObject  implements Runnable{
                 volume = new BigDecimal(kRecords2.get(iv).get(7).toString()).doubleValue() * 6.4/10000000;
             }
         }
+        /*************************************************************************************************/
         //成交量单位:千万
         log.debug("volume{}",new BigDecimal(volume).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
         log.debug("number{}",okNumber);
@@ -203,22 +187,19 @@ public class GlobalBuyObject  implements Runnable{
         log.debug("lastNum{}",(15-inum));
         log.debug("看下近8小时的多空比例值,如果这个值大于1说明多头{}",divisionA/divisionB);
 
-        if (rFive[0]<0 || rFive[1]<0 || rFive[2]<0 ||
-                inum>5 || sum < zhangfu ||
-                hours2 <0 || hours3<0){
-            //System.out.println("现在是否合格:false");
-        }
-        //保留两位小数  单位千万
+        this.buyObject.clear();//先清空再赋值
+        //保留两位小数  单位千万 最近这15根1分钟k线,成交量最大的这根阳线成交量是多少,单位人民币千万,美元汇率按6.4(不算正在发生这根)
         this.buyObject.put("volume",new BigDecimal(volume).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
         this.buyObject.put("number",okNumber);
         this.buyObject.put("minNumber",minNumber);
         this.buyObject.put("lastNum",15-inum); //最后15分钟(当前的15分钟),1分k线阳线的个数
         this.buyObject.put("division",divisionA/divisionB);//近8小时的多空比例值,如果这个值大于1说明多头
-
-        if (rFive[0]<0 || rFive[1]<0 || rFive[2]<0 ||
-                inum>5 || sum < zhangfu ||
-                hours2 <0 || hours3<0){
+        this.buyObject.put("time",new Date().getTime());
+        if (inum>5 || sum < zhangfu ||
+                hours <0 || hours3<0){
             this.buyObject.put("buyIfOk",false);//当前是否合格 合格返回true
+        }else {
+            this.buyObject.put("buyIfOk",true);
         }
         this.printlnCpuInfo();//加一个cpu负载和内存的统计
         log.debug("看下公共指标函数对象的值{}",this.buyObject);
