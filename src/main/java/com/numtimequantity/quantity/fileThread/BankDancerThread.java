@@ -89,8 +89,7 @@ public  class BankDancerThread  implements Runnable {
                             while (this.getLineIf() && 0.0==myPosition){
                                 try {
                                     //System.out.println("策略指标函数的值→→→→→→→→→→→→→→→→→→→→→→→→"+globalBuyObject.getBuyObject());
-                                    if((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(int)globalBuyObject.getBuyObject().get("lastNum")>9
-                                            &&(Double)globalBuyObject.getBuyObject().get("division")>1){
+                                    if((Boolean) globalBuyObject.getBuyObject().get("buyIfOk")&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5){
                                         //System.out.println("初始化检测指标合格,跳出循环");
                                         break;
                                     }else {
@@ -238,7 +237,7 @@ public  class BankDancerThread  implements Runnable {
                                             break;
                                         }
                                         this.quantitySleep30();//休眠30秒
-                                    }else if ((int)globalBuyObject.getBuyObject().get("number")>=1&&(int)globalBuyObject.getBuyObject().get("minNumber")>=5&&(Double)globalBuyObject.getBuyObject().get("division")>1.2){//尝试性操作,8小时符合条件的次数在1次或以上就下单2021年3月7日添加
+                                    }else if ((int)globalBuyObject.getBuyObject().get("number")>=3){//尝试性操作,8小时符合条件的次数在3次或以上就下单2021年6月8日添加
                                         if (ii<=globalI){ //初始化仓位时回到三级循环一区
                                             miniimaxIf = 1;
                                             break;

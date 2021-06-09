@@ -49,7 +49,7 @@ public class TopSymbolThread implements Runnable{
     public void run() {
         while (this.topSymbolThreadIf){
             try {
-                Thread.sleep(60*1000*1);//将休眠写在前面，以免报错时出现死循环
+                Thread.sleep(60*1000*8);//将休眠写在前面，以免报错时出现死循环
                 String[] split = this.getSymbolStr().split("\\|");
                 ArrayList<HashMap> topSymbol = new ArrayList<>();//用来存每一个交易对的map
                 for (String symbol:split){
@@ -57,29 +57,47 @@ public class TopSymbolThread implements Runnable{
                         HashMap<String, Object> hashMap = new HashMap<>();
                         ResponseEntity<ArrayList> forEntity = this.getRestTemplate().getForEntity(URI.create("https://api.binance.com/api/v3/klines?symbol=" + symbol + "&interval=1m&limit=480"), ArrayList.class);
                         List<List> li = forEntity.getBody();
-                        Double volume=0.0;
                         long time = 0;
-                        Double minVolume=0.0;//用来记录成交量最大的那根阴线的成交量
+                        ArrayList<Double> bigList = new ArrayList<>();//三根最大成交量的阳线
+                        ArrayList<Double> minList = new ArrayList<>();//三根最大成交量的阴线
+                        Double volume=0.0;
+                        Double minVolume=0.0;
                         long minTime = 0;//用来记录时间戳
-                        //选出这个交易对480根k线中成交量最大的那根
-                        for (int i=0;i<479;i++){//不算当前这根,所以是479
-                            List list = li.get(i);
-                            if(this.getDoubleFromStr(list.get(4).toString())-this.getDoubleFromStr(list.get(1).toString())>0
-                                    &&volume<this.getDoubleFromStr(list.get(7).toString())*6.4/1000000){
-                                volume=this.getDoubleFromStr(list.get(7).toString())*6.4/1000000;//单位是百万人民币  汇率6.4
-                                time=(long)list.get(0);
-                            }
-                            //选出成交量最大的那根阴线
-                            if(this.getDoubleFromStr(list.get(4).toString())-this.getDoubleFromStr(list.get(1).toString())<0
-                                    &&volume<this.getDoubleFromStr(list.get(7).toString())*6.4/1000000){
-                                minVolume=this.getDoubleFromStr(list.get(7).toString())*6.4/1000000;//单位是百万人民币  汇率6.4
-                                minTime=(long)list.get(0);
-                            }
+                        Double sum=0.0;//统计最近四小时的涨幅
+                        for (int sumI=0;sumI<li.size();sumI++){
+                            sum=sum+new BigDecimal(li.get(sumI).get(4).toString()).doubleValue()-new BigDecimal(li.get(sumI).get(1).toString()).doubleValue();
+
                         }
-                        hashMap.put("bigVol",new BigDecimal(volume).setScale(1, RoundingMode.HALF_DOWN).doubleValue());//将最大的成交量值存进去, 单位百万  四舍五入保留1位小数
+                        //选出这个交易对480根k线中成交量最大的3根
+                        for (int n=0;n<3;n++){
+                            int ia=0;
+                            int ib=0;
+                            for (int i=0;i<li.size();i++){
+                                List list = li.get(i);
+                                if(this.getDoubleFromStr(list.get(4).toString())-this.getDoubleFromStr(list.get(1).toString())>0
+                                        &&volume<this.getDoubleFromStr(list.get(7).toString())*6.4/1000000){
+                                    volume=this.getDoubleFromStr(list.get(7).toString())*6.4/1000000;//单位是百万人民币  汇率6.4
+                                    ia=i;
+                                    time=(long)list.get(0);
+                                }else if (minVolume<this.getDoubleFromStr(list.get(7).toString())*6.4/1000000){
+                                    minVolume=this.getDoubleFromStr(list.get(7).toString())*6.4/1000000;//单位是百万人民币  汇率6.4
+                                    ib=i;
+                                }
+                            }
+                            li.remove(ia);
+                            li.remove(ib);
+                            bigList.add(volume);
+                            minList.add(minVolume);
+                        }
+                        Double topVol=(bigList.get(0)+bigList.get(1)+bigList.get(2))/(minList.get(0)+minList.get(1)+minList.get(2));
+                        //成交额最大的三根阳线的成交量 除以最大三根阴线成交量
+                        hashMap.put("bigVol",new BigDecimal(topVol).setScale(2, RoundingMode.HALF_DOWN).doubleValue());//将最大的成交量值存进去, 单位百万  四舍五入保留1位小数
                         /*先不传异动时的时间戳给前端  但时间戳还是非常有用的  未来开发会用到*/
                         hashMap.put("time",time);//把发生异动的时间存进去
-                        hashMap.put("minVol",new BigDecimal(minVolume).setScale(1, RoundingMode.HALF_DOWN).doubleValue());//480根k线当中成交量最大的阴线 单位百万 四舍五入保留1位小数
+                        //总涨幅
+                        hashMap.put("sumVol",new BigDecimal(sum).setScale(2, RoundingMode.HALF_DOWN).doubleValue());//480根k线当中成交量最大的阴线 单位百万 四舍五入保留1位小数
+                        //三根最大分钟阳线的成交额  单位百万
+                        hashMap.put("volMoney",new BigDecimal(bigList.get(0)+bigList.get(1)+bigList.get(2)).setScale(2, RoundingMode.HALF_DOWN).doubleValue());
                         /*先不传异动时的时间戳给前端  但时间戳还是非常有用的  未来开发会用到*/
                         //hashMap.put("minTime",minTime);//砸盘的时间戳
                         hashMap.put("symbol",symbol.substring(0,symbol.length()-4));//把币种名称存进去   减掉了后面的"USDT"
@@ -107,6 +125,7 @@ public class TopSymbolThread implements Runnable{
                     topSymbolInfo.add(topSymbol.get(num));//按顺序放入最大的值  添加值末尾
                     topSymbol.remove(num);//删掉选出来的索引
                 }
+                log.debug("排好序后看下排名结果{}",topSymbolInfo);
             //
             //    this.topSymbolList=topSymbolInfo;//再赋值
             //    log.debug("排序好交易对为{}",topSymbolInfo);
@@ -128,11 +147,12 @@ public class TopSymbolThread implements Runnable{
                 //选出比例是1.3倍的值，如果成交量最大的阳线的量除以成交量最大的阴线的成交量大于1.1倍 则把这个交易对存起来
                 this.topSymbolList.clear();//先清空
                 for (int iv=0;iv<topSymbolInfo.size();iv++){
-                    Double theBigVol = (Double)topSymbolInfo.get(iv).get("bigVol");
-                    Double theMinVol = (Double)topSymbolInfo.get(iv).get("minVol");
+                    Double theBigVol = (Double)topSymbolInfo.get(iv).get("bigVol");//8小时内分钟k成交量最大三根除以成交量最小三根的比值
+                    Double theSumVol = (Double)topSymbolInfo.get(iv).get("sumVol");//8小时总涨幅
+                    Double theVolMoney = (Double)topSymbolInfo.get(iv).get("volMoney");
                     long theTime = (long) topSymbolInfo.get(iv).get("time");
-                    //买入除以卖出大于1.3倍 并且 买入大于500万  并且  已经过去一小时了
-                    if (theBigVol/theMinVol>1.3&&theBigVol>5&&new Date().getTime()-theTime>1000*60*60){
+                    //最近8小时收涨 并且 最高买入除以最高卖出大于1.3倍 并且 买入大于500万  并且  已经过去一小时了
+                    if (theSumVol>0&&theBigVol>1.3&&theVolMoney>5&&new Date().getTime()-theTime>1000*60*60){
                         this.topSymbolList.add(topSymbolInfo.get(iv));//存起来
                         log.debug("龙虎榜合格数据为{}",topSymbolInfo.get(iv));
                     }
