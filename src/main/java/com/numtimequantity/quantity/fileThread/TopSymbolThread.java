@@ -49,7 +49,7 @@ public class TopSymbolThread implements Runnable{
     public void run() {
         while (this.topSymbolThreadIf){
             try {
-                Thread.sleep(60*1000*8);//将休眠写在前面，以免报错时出现死循环
+                Thread.sleep(60*1000*5);//将休眠写在前面，以免报错时出现死循环
                 String[] split = this.getSymbolStr().split("\\|");
                 ArrayList<HashMap> topSymbol = new ArrayList<>();//用来存每一个交易对的map
                 for (String symbol:split){
@@ -151,8 +151,8 @@ public class TopSymbolThread implements Runnable{
                     Double theSumVol = (Double)topSymbolInfo.get(iv).get("sumVol");//8小时总涨幅
                     Double theVolMoney = (Double)topSymbolInfo.get(iv).get("volMoney");
                     long theTime = (long) topSymbolInfo.get(iv).get("time");
-                    //最近8小时收涨 并且 最高买入除以最高卖出大于1.3倍 并且 买入大于500万  并且  已经过去一小时了
-                    if (theSumVol>0&&theBigVol>1.3&&theVolMoney>5&&new Date().getTime()-theTime>1000*60*60){
+                    //最近8小时收涨 并且 最高买入除以最高卖出大于1.3倍 并且 买入大于3000万  并且  已经过去一小时了
+                    if (theSumVol>0&&theBigVol>1.3&&theVolMoney>30&&new Date().getTime()-theTime>1000*60*60){
                         this.topSymbolList.add(topSymbolInfo.get(iv));//存起来
                         log.debug("龙虎榜合格数据为{}",topSymbolInfo.get(iv));
                     }

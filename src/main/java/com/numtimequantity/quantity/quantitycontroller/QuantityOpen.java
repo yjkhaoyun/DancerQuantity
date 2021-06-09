@@ -63,7 +63,6 @@ public class QuantityOpen {
                     double dou_K = new BigDecimal(k).doubleValue();//传过来的k是个百分数   比如1.5就是百分之1.5
                     //获取最新价   使用了权重1点
                     String strK = Double.toString(globalFun.lastPrice() * dou_K / 100);//比如传过来的是1.5，k就是btc价格*1.5%
-                    bankDancerThread.setGlobalFun(globalFun);
                     bankDancerThread.setGlobalBuyObject(globalBuyObject);
                     ArrayList<String[]> list = new ArrayList<>();
                     String arr[] = {Long.toString(new Date().getTime()),"0"};//初始化一个字符串数组  前端的折线图数据
@@ -77,7 +76,8 @@ public class QuantityOpen {
                     hashMap.put("a",a);
                     hashMap.put("k",strK);
                     hashMap.put("acc",acc);
-                    bankDancerThread.getThreadLocal().set(hashMap);
+                    bankDancerThread.getGlobalFunThreadLocal().set(globalFun);//将操作数据库的对象存进去
+                    bankDancerThread.getThreadLocal().set(hashMap);//将量化参数存进去
                     //System.out.println("看下这个getThreadLocal得uuid值");
                     //System.out.println(bankDancerThread.getThreadLocal().get());
                     bankDancerThread.getLineThreadIf().put(uuid,true);//设定开关控制
