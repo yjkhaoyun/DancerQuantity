@@ -119,8 +119,13 @@ public  class BankDancerThread  implements Runnable {
                                 }catch (Exception e){
                                     log.info("初始化建仓循环检测指标处报错{}",e);
                                 }
-                                //第3处权重 权重：5  期货每分钟权重上限2400
-                                myPosition = globalFun.position().get("up");
+                                try {
+                                    //第3处权重 权重：5  期货每分钟权重上限2400
+                                    myPosition = globalFun.position().get("up");
+                                }catch (Exception e){
+                                    log.info("初始化建仓里面的获取持仓出现报错{}",e);
+                                    myPosition=0.0;
+                                }
                             }
                             firstIf = false;
                         }
@@ -154,8 +159,13 @@ public  class BankDancerThread  implements Runnable {
                         }
                         this.quantitySleep30();//休眠30秒
                         this.quantitySleep30();//休眠30秒
-                        //第5处权重 权重：5  期货每分钟权重上限2400
-                        myPosition = globalFun.position().get("up");
+                        try {
+                            //第5处权重 权重：5  期货每分钟权重上限2400
+                            myPosition = globalFun.position().get("up");
+                        }catch (Exception e){
+                            log.info("初始化建仓的尾部获取持仓处出现报错{}",e);
+                            myPosition=0.0;
+                        }
                     }
                     this.quantitySleep30();//休眠30秒
                     this.quantitySleep30();//休眠30秒

@@ -217,7 +217,6 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
             Thread.sleep(20000);
             return super.getOrder(orderId);
         }catch (Exception e){
-            System.out.println("获取订单状态失败"+e);
             log.info("获取订单状态时出现异常{}",e);
         }
         return null;
