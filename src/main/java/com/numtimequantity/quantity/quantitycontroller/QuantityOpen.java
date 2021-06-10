@@ -59,10 +59,8 @@ public class QuantityOpen {
                     String k = request.getParameter("k");
                     String acc = request.getParameter("acc");//前端传过来的  开启量化时选择的金额 500u 1000u ...
                     String uuid = request.getParameter("uuid");
-                    GlobalFun globalFun = new GlobalFun(globalBuyObject.getRestTemplate(), apiKey, secretKey);
-                    double dou_K = new BigDecimal(k).doubleValue();//传过来的k是个百分数   比如1.5就是百分之1.5
+
                     //获取最新价   使用了权重1点
-                    String strK = Double.toString(globalFun.lastPrice() * dou_K / 100);//比如传过来的是1.5，k就是btc价格*1.5%
                     bankDancerThread.setGlobalBuyObject(globalBuyObject);
                     ArrayList<String[]> list = new ArrayList<>();
                     String arr[] = {Long.toString(new Date().getTime()),"0"};//初始化一个字符串数组  前端的折线图数据
@@ -74,9 +72,11 @@ public class QuantityOpen {
                     HashMap<String, String> hashMap = new HashMap<>();
                     hashMap.put("uuid",uuid);
                     hashMap.put("a",a);
-                    hashMap.put("k",strK);
+                    hashMap.put("k",k);
                     hashMap.put("acc",acc);
-                    bankDancerThread.getGlobalFunThreadLocal().set(globalFun);//将操作数据库的对象存进去
+                    hashMap.put("apiKey",apiKey);
+                    hashMap.put("secretKey",secretKey);
+
                     bankDancerThread.getThreadLocal().set(hashMap);//将量化参数存进去
                     //System.out.println("看下这个getThreadLocal得uuid值");
                     //System.out.println(bankDancerThread.getThreadLocal().get());

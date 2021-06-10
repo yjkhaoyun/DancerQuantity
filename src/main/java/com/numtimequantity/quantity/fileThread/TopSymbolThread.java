@@ -103,10 +103,8 @@ public class TopSymbolThread implements Runnable{
                         hashMap.put("symbol",symbol.substring(0,symbol.length()-4));//把币种名称存进去   减掉了后面的"USDT"
                         topSymbol.add(hashMap);//存储一个完成
                     }catch (Exception e){
-                        log.info("排名线程遍历交易对时出现报错{}",e);
-
+                        //log.info("排名线程遍历交易对时出现报错{}",e);
                     }
-
                 }
                 ArrayList<HashMap> topSymbolInfo = new ArrayList<>();
                 //接下来对topSymbol的成交量进行从大到小排序
