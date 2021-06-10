@@ -189,9 +189,9 @@ public  class BankDancerThread  implements Runnable {
                     int ii;
                     //ii 0的值不可能是空值
                     BigDecimal bigDecimal = new BigDecimal(myPosition/(2*a));
-                    ii = bigDecimal.setScale(0, RoundingMode.DOWN).intValue();
+                    ii = bigDecimal.setScale(0, RoundingMode.UP).intValue();//进一法  ii不可能等于0
                     globalI=ii;
-                    if (ii>0){
+                    if (ii>1){
                         for (int size=0;size<ii;size++){
                             yings.add(0.0);
                             suns.add(0.0);

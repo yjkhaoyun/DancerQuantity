@@ -27,9 +27,9 @@ class QuantityApplicationTests {
 TopSymbolThread topSymbolThread;
     @Test
     void contextLoads() {
-        /*topSymbolThread.setTopSymbolThreadIf(true);
-        Thread thread = new Thread(topSymbolThread);
-        thread.start();*/
+        BigDecimal bigDecimal = new BigDecimal(0.002/0.01);
+        int ii = bigDecimal.setScale(0, RoundingMode.UP).intValue();//进一法
+        System.out.println(ii);
     }
     @Test
     void test2(){
