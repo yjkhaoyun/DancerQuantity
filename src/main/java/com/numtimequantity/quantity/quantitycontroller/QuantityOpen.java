@@ -43,7 +43,7 @@ public class QuantityOpen {
     public String oneP(HttpServletRequest request){
         //System.out.println("上面start方法执行了");
         try {
-            if ("0".equals(request.getParameter("quaId"))){//如果是第一个量化策略
+            if ("0".equals(request.getParameter("quaId"))){//如果是第一个量化策略 bankDancer
                 //如果uuid存在并且值为true则这个量化线程在运行中
                 if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))&&
                         bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
@@ -65,8 +65,11 @@ public class QuantityOpen {
                     ArrayList<String[]> list = new ArrayList<>();
                     String arr[] = {Long.toString(new Date().getTime()),"0"};//初始化一个字符串数组  前端的折线图数据
                     list.add(arr);//将指定元素添加到末尾
-                    /***测试部分 先生成假的数据********************/
-
+                    /***保存开启的金额和等级********************/
+                    HashMap<String, String> moneyAndLvMap = new HashMap<>();
+                    moneyAndLvMap.put("money",acc);
+                    moneyAndLvMap.put("lv",a);
+                    bankDancerThread.getQuaMoneyAndLv().put(uuid,moneyAndLvMap);
                     /******************************************/
                     bankDancerThread.getInfo().put(uuid,list);
                     HashMap<String, String> hashMap = new HashMap<>();
@@ -112,13 +115,17 @@ public class QuantityOpen {
     @ResponseBody
     public String closeLine(HttpServletRequest request){
         log.debug("来到了关闭线程接口");
+        String uuid = request.getParameter("uuid");
         if ("0".equals(request.getParameter("quaId"))){//关闭第一个量化策略
-            if (!bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))){
+            if (!bankDancerThread.getLineThreadIf().containsKey(uuid)){
                 return "noExist";//uuid值不存在map中
-            }else if (!bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){
+            }else if (!bankDancerThread.getLineThreadIf().get(uuid)){
                 return "exist";
             }else{
-                bankDancerThread.getLineThreadIf().put(request.getParameter("uuid"),false);//停止run线程
+                bankDancerThread.getLineThreadIf().put(uuid,false);//停止run线程
+                if (bankDancerThread.getQuaMoneyAndLv().containsKey(uuid)){//关闭时删掉这个uuid的键值对
+                    bankDancerThread.getQuaMoneyAndLv().remove(uuid);
+                }
                 return "ok";//成功关闭量化机器人！
             }
         }else if ("1".equals(request.getParameter("quaId"))){//如果是第二个量化
@@ -182,18 +189,23 @@ public class QuantityOpen {
      */
     @PostMapping("/selectQuaIf")
     @ResponseBody
-    public String selectQuaIf(HttpServletRequest request){
+    public HashMap selectQuaIf(HttpServletRequest request){
         String quaId = request.getParameter("quaId");
         String uuid = request.getParameter("uuid");
+        HashMap<String, String> hashMap = new HashMap<>();
         Boolean bankDancerIf = bankDancerThread.getLineThreadIf().containsKey(uuid)?bankDancerThread.getLineThreadIf().get(uuid):false;
         if ("0".equals(quaId)&&bankDancerIf){//如果是查bankDancer量化
-            return "ok";
+            hashMap.put("mes","ok");
+            hashMap.put("money",bankDancerThread.getQuaMoneyAndLv().get("uuid").get("money"));
+            hashMap.put("lv",bankDancerThread.getQuaMoneyAndLv().get("uuid").get("money"));
+            return hashMap;
         }else if ("1".equals(quaId)){
 
         }else if ("2".equals(quaId)){
 
         }
-        return "no";
+        hashMap.put("mes","no");
+        return hashMap;
     }
 
     /**

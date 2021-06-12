@@ -33,6 +33,8 @@ public  class BankDancerThread  implements Runnable {
     //线程副本区,父线程给子线程传值,平级线程不可见  一共有六个值   uuid,a和k acc api 和 secretApi 比如{uuid:"",a:2.2,k:2.2} 除了能存HashMap,也能存别的格式
     private ThreadLocal<HashMap<String,String>> threadLocal=new TransmittableThreadLocal<>();
     private HashMap<String,ArrayList<String[]>> info = new HashMap<>();//折线图的数据
+    //用来存储开启的是多少金额什么等级的量化
+    private HashMap<String,HashMap<String,String>> quaMoneyAndLv = new HashMap<>();
 
     /**
      * 把与庄共舞策略搬到这来
