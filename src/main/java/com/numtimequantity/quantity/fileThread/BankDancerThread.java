@@ -344,7 +344,7 @@ public  class BankDancerThread  implements Runnable {
                                 buyidAttribute = globalFun.come(buyid);
                             }
                             /*判断两个订单状态*/
-                            if (buyidOk){
+                            if (buyidOk){//又补了一份仓
                                 ii++;
                                 if (yings.size()<=ii-1){
                                     yings.add(globalFun.getDouble((String) buyidAttribute.get("avgPrice"))+k);
@@ -355,10 +355,8 @@ public  class BankDancerThread  implements Runnable {
                                 }
                                 recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                                 break;
-                            }else  if (sellidAllOk){
-                                ii--;
-                                yings.add(ii-1,globalFun.getDouble((String)sellidAllAttribute.get("avgPrice"))+k);
-                                suns.add(ii-1,globalFun.getDouble((String)sellidAllAttribute.get("avgPrice"))-k);
+                            }else  if (sellidAllOk){//平仓全部了，可以什么都不做
+                                ii--;//清空了仓位以后以后把ii清零
                                 recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                                 break;
                             }
