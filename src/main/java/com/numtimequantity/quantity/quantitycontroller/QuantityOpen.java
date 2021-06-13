@@ -58,6 +58,7 @@ public class QuantityOpen {
                     String a = request.getParameter("a");
                     String k = request.getParameter("k");
                     String acc = request.getParameter("acc");//前端传过来的  开启量化时选择的金额 500u 1000u ...
+                    String lv = request.getParameter("lv");//风险等级， 低风险  中风险  高风险
                     String uuid = request.getParameter("uuid");
 
                     //获取最新价   使用了权重1点
@@ -67,8 +68,8 @@ public class QuantityOpen {
                     list.add(arr);//将指定元素添加到末尾
                     /***保存开启的金额和等级********************/
                     HashMap<String, String> moneyAndLvMap = new HashMap<>();
-                    moneyAndLvMap.put("money",acc);
-                    moneyAndLvMap.put("lv",a);
+                    moneyAndLvMap.put("acc",acc);
+                    moneyAndLvMap.put("lv",lv);
                     bankDancerThread.getQuaMoneyAndLv().put(uuid,moneyAndLvMap);
                     /******************************************/
                     bankDancerThread.getInfo().put(uuid,list);
@@ -196,8 +197,8 @@ public class QuantityOpen {
         Boolean bankDancerIf = bankDancerThread.getLineThreadIf().containsKey(uuid)?bankDancerThread.getLineThreadIf().get(uuid):false;
         if ("0".equals(quaId)&&bankDancerIf){//如果是查bankDancer量化
             hashMap.put("mes","ok");
-            hashMap.put("money",bankDancerThread.getQuaMoneyAndLv().get("uuid").get("money"));
-            hashMap.put("lv",bankDancerThread.getQuaMoneyAndLv().get("uuid").get("money"));
+            hashMap.put("acc",bankDancerThread.getQuaMoneyAndLv().get("uuid").get("acc"));
+            hashMap.put("lv",bankDancerThread.getQuaMoneyAndLv().get("uuid").get("lv"));
             return hashMap;
         }else if ("1".equals(quaId)){
 
