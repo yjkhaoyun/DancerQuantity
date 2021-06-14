@@ -45,6 +45,8 @@ public  class BankDancerThread  implements Runnable {
             SimpleClientHttpRequestFactory simpleClientHttpRequestFactory = new SimpleClientHttpRequestFactory();
             simpleClientHttpRequestFactory.setConnectTimeout(5000);//连接主机的超时时间
             simpleClientHttpRequestFactory.setReadTimeout(10000);//从主机读取数据的超时时间 只设置了ConnectionTimeout没有设置ReadTimeout，结果导致线程卡死。
+            //翻墙设置  打包时关掉
+            //simpleClientHttpRequestFactory.setProxy(new Proxy(Proxy.Type.HTTP,new InetSocketAddress("127.0.0.1", 1080)));
             /****************************/
             RestTemplate restTemplate = new RestTemplate(simpleClientHttpRequestFactory);
             String uuid = this.getThreadLocal().get().get("uuid");
@@ -73,6 +75,7 @@ public  class BankDancerThread  implements Runnable {
                 log.info("uuid{}",uuid);
                 log.info("开启量化时报错终止{}",e);
                 this.lineThreadIf.put(uuid,false);
+                this.quaMoneyAndLv.remove(uuid);
             }
 
             while (this.getLineIf()){//this.runIfMap.get(this.threadLocal.get().get("uuid"))

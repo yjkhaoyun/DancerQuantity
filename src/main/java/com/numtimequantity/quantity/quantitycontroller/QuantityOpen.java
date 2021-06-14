@@ -1,7 +1,6 @@
 package com.numtimequantity.quantity.quantitycontroller;
 
 
-import com.numtimequantity.quantity.bankDancerMethod.GlobalFun;
 import com.numtimequantity.quantity.fileThread.BankDancerThread;
 import com.numtimequantity.quantity.fileThread.GlobalBuyObject;
 import com.numtimequantity.quantity.fileThread.TopSymbolThread;
@@ -9,13 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -60,6 +57,8 @@ public class QuantityOpen {
                     String acc = request.getParameter("acc");//前端传过来的  开启量化时选择的金额 500u 1000u ...
                     String lv = request.getParameter("lv");//风险等级， 低风险  中风险  高风险
                     String uuid = request.getParameter("uuid");
+                    log.debug("看看两个参数acc{}",acc);
+                    log.debug("看看两个参数lv{}",lv);
 
                     //获取最新价   使用了权重1点
                     bankDancerThread.setGlobalBuyObject(globalBuyObject);
@@ -70,7 +69,9 @@ public class QuantityOpen {
                     HashMap<String, String> moneyAndLvMap = new HashMap<>();
                     moneyAndLvMap.put("acc",acc);
                     moneyAndLvMap.put("lv",lv);
+                    log.debug("看先acc和lv{}",moneyAndLvMap);
                     bankDancerThread.getQuaMoneyAndLv().put(uuid,moneyAndLvMap);
+                    log.debug("量化开始时看下量化的属性{}",bankDancerThread.getQuaMoneyAndLv());
                     /******************************************/
                     bankDancerThread.getInfo().put(uuid,list);
                     HashMap<String, String> hashMap = new HashMap<>();
@@ -197,8 +198,9 @@ public class QuantityOpen {
         Boolean bankDancerIf = bankDancerThread.getLineThreadIf().containsKey(uuid)?bankDancerThread.getLineThreadIf().get(uuid):false;
         if ("0".equals(quaId)&&bankDancerIf){//如果是查bankDancer量化
             hashMap.put("mes","ok");
-            hashMap.put("acc",bankDancerThread.getQuaMoneyAndLv().get("uuid").get("acc"));
-            hashMap.put("lv",bankDancerThread.getQuaMoneyAndLv().get("uuid").get("lv"));
+            log.debug("查询时看下量化的属性{}",bankDancerThread.getQuaMoneyAndLv());
+            hashMap.put("acc",bankDancerThread.getQuaMoneyAndLv().get(uuid).get("acc"));
+            hashMap.put("lv",bankDancerThread.getQuaMoneyAndLv().get(uuid).get("lv"));
             return hashMap;
         }else if ("1".equals(quaId)){
 
