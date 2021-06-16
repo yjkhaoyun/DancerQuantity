@@ -42,8 +42,7 @@ public class QuantityOpen {
         try {
             if ("0".equals(request.getParameter("quaId"))){//如果是第一个量化策略 bankDancer
                 //如果uuid存在并且值为true则这个量化线程在运行中
-                if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))&&
-                        bankDancerThread.getLineThreadIf().get(request.getParameter("uuid"))){//如果有key并且key的值是true
+                if (bankDancerThread.getLineThreadIf().containsKey(request.getParameter("uuid"))){//如果有key并且key的值是true
                     return "has";//程序已经在运行中
                 }else {
                     //量化开始的时间戳

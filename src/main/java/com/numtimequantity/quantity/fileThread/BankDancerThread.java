@@ -64,7 +64,6 @@ public  class BankDancerThread  implements Runnable {
             /*存储策略启动时的余额*/
             try {
                 k = globalFun.lastPrice() * dou_K / 100;
-                Thread.sleep(30000);
                 //第1处权重 权重：5  期货每分钟权重上限2400
                 account = globalFun.account();
                 if (account<acc){//如果账户真实余额小于前端选择的余额量化就不能开启
@@ -119,8 +118,7 @@ public  class BankDancerThread  implements Runnable {
                                     }else {
                                         //System.out.println("目前为下跌程序");
                                     }
-                                    this.quantitySleep30();//休眠30秒
-                                    this.quantitySleep30();//休眠30秒
+                                    this.quantitySleep60();//休眠60秒
                                 }catch (Exception e){
                                     log.info("初始化建仓循环检测指标处报错{}",e);
                                 }
@@ -134,7 +132,7 @@ public  class BankDancerThread  implements Runnable {
                             }
                             firstIf = false;
                         }
-                        construction = true;
+                        construction = true;//标记是否执行了建仓程序
                         //////////////////////////////////
                         if (!this.getLineIf()||0.0!=myPosition){
                             //System.out.println("第一个跳出程序");
@@ -148,32 +146,30 @@ public  class BankDancerThread  implements Runnable {
                         }else {
                             //第4处权重 权重：1  期货每分钟权重上限2400
                             newLastPrice = globalFun.lastPrice();
-                            if(sun==0.0){
-                                ying = newLastPrice + k + 1;
-                                sun = newLastPrice -k - 1;
-                            }
-                            if (newLastPrice > sun + k ){
-                                sun = newLastPrice - k;
-                                //System.out.println("等待下单中,勿追涨...");
-                            }
-                            if(newLastPrice<sun){
-                                buyid = globalFun.marketBuy(2*a);
-                                buyid_ = globalFun.marketSell(a);
-                                //System.out.println("市价成交");
+                            if (newLastPrice!=null){
+                                if(sun==0.0){
+                                    ying = newLastPrice + k + 1;
+                                    sun = newLastPrice -k - 1;
+                                }
+                                if (newLastPrice > sun + k ){
+                                    sun = newLastPrice - k;
+                                }
+                                if(newLastPrice<sun){
+                                    buyid = globalFun.marketBuy(2*a);
+                                    buyid_ = globalFun.marketSell(a);
+                                }
                             }
                         }
-                        this.quantitySleep30();//休眠30秒
-                        this.quantitySleep30();//休眠30秒
+                        this.quantitySleep60();//休眠60秒
                         try {
                             //第5处权重 权重：5  期货每分钟权重上限2400
                             myPosition = globalFun.position().get("up");
                         }catch (Exception e){
-                            log.info("初始化建仓的尾部获取持仓处出现报错{}",e);
+                            log.info("初始化建仓的尾部获取持仓处出现报错{}");
                             myPosition=0.0;
                         }
                     }
-                    this.quantitySleep30();//休眠30秒
-                    this.quantitySleep30();//休眠30秒
+                    this.quantitySleep60();//休眠60秒
                     if (!this.getLineIf()){
                         break; //while后面紧跟停止跳出
                     }
@@ -184,11 +180,24 @@ public  class BankDancerThread  implements Runnable {
                         log.info("获取公共指标函数的时间戳强制转成Long类型时报错{}",e);
                     }
                     //第6处权重 权重：1  期货每分钟权重上限2400
-                    newLastPrice = globalFun.lastPrice();
+
+                    while (true){
+                        Thread.sleep(30000);
+                        newLastPrice = globalFun.lastPrice();
+                        if (newLastPrice!=null){
+                            break;
+                        }
+                    }
                     //第7处权重 权重：5  期货每分钟权重上限2400
-                    Double newPositionPrice = globalFun.position().get("upPrice");
-                    this.quantitySleep30();//休眠30秒
-                    this.quantitySleep30();//休眠30秒
+                    Double newPositionPrice;
+                    while (true){
+                        Thread.sleep(30000);
+                        ConcurrentHashMap<String, Double> position = globalFun.position();
+                        if (position!=null){
+                            newPositionPrice=position.get("upPrice");
+                            break;
+                        }
+                    }
                     ArrayList<Double> yings = new ArrayList<>();
                     ArrayList<Double> suns = new ArrayList<>();
                     int ii;
@@ -215,19 +224,24 @@ public  class BankDancerThread  implements Runnable {
                     /*二级循环*/
                     while (this.getLineIf()){
                         miniimaxIf = 0;
-                        //当前实际盈亏 第8处权重 权重：5  现货每分钟权重上限1200
-                        Double allAccountProfit = this.getDoubleNum(2,globalFun.accountNow(Long.toString(time))-account);//真实余额减去策略启动时的余额等于真实盈亏
-                        log.info("uuid为{}",uuid);
-                        log.info("进入二级循环指标前打印实际盈亏{}",allAccountProfit);
-                        //System.out.println("收益:"+allAccountProfit+"USDT");
+                        try {
+                            //当前实际盈亏 第8处权重 权重：5  现货每分钟权重上限1200
+                            Double allAccountProfit = this.getDoubleNum(2,globalFun.accountNow(Long.toString(time))-account);//真实余额减去策略启动时的余额等于真实盈亏
+                            log.info("进入二级循环指标前打印uuid为{}",uuid);
+                            log.info("进入二级循环指标前打印实际盈亏{}",allAccountProfit);
+                            //存储实际盈亏
+                            String arr[] = {Long.toString(new Date().getTime()),allAccountProfit.toString()};
+                            this.getInfo().get(uuid).add(arr);
+                        }catch (Exception e){}
                         //打印收益    第9处权重 权重：5  期货每分钟权重上限2400
-                        myPosition = globalFun.position().get("up");//持仓张数,持仓数量
-                        this.quantitySleep30();//休眠30秒
-                        this.quantitySleep30();//休眠30秒
-                        //存储实际盈亏
-                        String arr[] = {Long.toString(new Date().getTime()),allAccountProfit.toString()};
-                        this.getInfo().get(uuid).add(arr);
-
+                        while (true){//持仓张数,持仓数量
+                            Thread.sleep(60000);
+                            ConcurrentHashMap<String, Double> position1 = globalFun.position();
+                            if (position1!=null){
+                                myPosition=position1.get("up");
+                                break;
+                            }
+                        }
                         /*↓ 多头情况上下通道下单↓*/
                         if(0.0 != myPosition && this.getLineIf()){ //
                             if(ii-globalI>0){ //交易一圈回来 ii在后面会变化
@@ -246,41 +260,39 @@ public  class BankDancerThread  implements Runnable {
                             Boolean closeAllDownIf = true;//用来控制下面的平全部空仓程序只执行一次
                             while (this.getLineIf()){
                                 try {
-                                    this.quantitySleep30();//休眠30秒
-                                    this.quantitySleep30();//休眠30秒
+                                    this.quantitySleep60();//休眠60秒
                                     //第10处权重 权重：1  期货每分钟权重上限2400
                                     newLastPrice = globalFun.lastPrice();
-                                    if (closeAllDownIf&&newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
-                                        globalFun.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
-                                        closeAllDownIf=false;//用来控制这里的平全部空仓程序只执行一次  有时空仓可能没有仓位，所以允许一次容错
-                                    }
-                                    if (suns.get(ii-1)+k-newLastPrice>(suns.get(ii-1)+k)*0.08){ //现价低于止损价x%时止损
-                                        globalFun.marketCloseAllProfit("LONG");//平多头时输入LONG
-                                        //System.out.println("触发止损1");
-                                        break;
-                                    }
-                                    if ((Long)globalBuyObject.getBuyObject().get("time")-recorderTime<15*60*1000){//现在时间减去上一次时间大于15分钟
-                                        this.quantitySleep30();//休眠30秒
-                                        this.quantitySleep30();//休眠30秒
-                                    }else if (!(Boolean) globalBuyObject.getBuyObject().get("buyIfOk")){ //如果下单条件不成立则进来看看需不需要止损
-                                        if (ii <=globalI && newLastPrice > ying){
-                                            miniimaxIf = 3; //暂时先让三级循环一区执行此情况
-                                            break;
-                                        }else if (ii > globalI && newLastPrice > yings.get(ii-1)){
-                                            miniimaxIf = 4;
+                                    if (newLastPrice!=null){
+                                        if (closeAllDownIf&&newLastPrice<suns.get(ii-1)&&(int)globalBuyObject.getBuyObject().get("lastNum")>9){
+                                            globalFun.marketCloseAllProfit("SHORT"); //市价平空,平仓全部
+                                            closeAllDownIf=false;//用来控制这里的平全部空仓程序只执行一次  有时空仓可能没有仓位，所以允许一次容错
+                                        }
+                                        if (suns.get(ii-1)+k-newLastPrice>(suns.get(ii-1)+k)*0.08){ //现价低于止损价x%时止损
+                                            globalFun.marketCloseAllProfit("LONG");//平多头时输入LONG
                                             break;
                                         }
-                                        this.quantitySleep30();//休眠30秒
-                                    }else if ((int)globalBuyObject.getBuyObject().get("number")>=2){//20210610尝试性操作,目前还在犹豫是3还是2    8小时符合条件的次数在3次或以上就下单2021年6月8日添加
-                                        if (ii<=globalI){ //初始化仓位时回到三级循环一区
-                                            miniimaxIf = 1;
-                                            break;
-                                        }else {//有额外仓位时 进入三级循环二区
-                                            miniimaxIf = 2;
-                                            break;
+                                        if ((Long)globalBuyObject.getBuyObject().get("time")-recorderTime<15*60*1000){//现在时间减去上一次时间大于15分钟
+                                            log.info("来到休眠里面,因为需要等一会再监测");
+                                            this.quantitySleep60();//休眠60秒
+                                        }else if (!(Boolean) globalBuyObject.getBuyObject().get("buyIfOk")){ //如果下单条件不成立则进来看看需不需要止损
+                                            if (ii <=globalI && newLastPrice > ying){
+                                                miniimaxIf = 3; //暂时先让三级循环一区执行此情况
+                                                break;
+                                            }else if (ii > globalI && newLastPrice > yings.get(ii-1)){
+                                                miniimaxIf = 4;
+                                                break;
+                                            }
+                                        }else if ((int)globalBuyObject.getBuyObject().get("number")>=2){//20210610尝试性操作,目前还在犹豫是3还是2    8小时符合条件的次数在3次或以上就下单2021年6月8日添加
+                                            if (ii<=globalI){ //初始化仓位时回到三级循环一区
+                                                miniimaxIf = 1;
+                                                break;
+                                            }else {//有额外仓位时 进入三级循环二区
+                                                miniimaxIf = 2;
+                                                break;
+                                            }
                                         }
                                     }
-                                    //System.out.println("检测时间间隔:"+((Long)globalBuyObject.getBuyObject().get("time")-recorderTime));
                                 }catch (Exception e){
                                     log.info("中间循环检测部分报错,忽略继续循环{}",e);
                                 }
@@ -293,7 +305,14 @@ public  class BankDancerThread  implements Runnable {
                             break;
                         }
                         //第11处权重 权重：5  期货每分钟权重上限2400
-                        ConcurrentHashMap<String, Double> positionNew = globalFun.position();//更新最新持仓信息
+                        ConcurrentHashMap<String, Double> positionNew;
+                        while (true){
+                            Thread.sleep(35000);
+                            positionNew = globalFun.position();//更新最新持仓信息
+                            if (positionNew!=null){
+                                break;
+                            }
+                        }
                         if (!this.getLineIf()){
                             break;
                         }
@@ -314,115 +333,114 @@ public  class BankDancerThread  implements Runnable {
                             ii--;
                         }
 
-                        //第12处权重 权重：1  期货每分钟权重上限2400
-                        newLastPrice = globalFun.lastPrice();//更新最新价格
                         /*↓三级循环1区↓*/
                         Boolean ifsuns = true;
                         while (miniimaxIf == 1 && this.getLineIf()){
-                            Double originalSun = suns.get(ii-1);
-                            //刚进来时现价分三种情况:1.newLastPrice 位于上半部分  2.newLastPrice 位于下半部分  3.newLastPrice 位于suns.get(ii)下面
-                            if (ifsuns && newLastPrice - k < suns.get(ii-1)){ //情况2 刚进来时允许通过一次
-                                suns.add(ii-1,newLastPrice-k-6);
-                            }
-
-                            if (newLastPrice-k-suns.get(ii-1)>5 && originalSun-5>suns.get(ii-1)){//情况2第一次时通过  情况1并且suns[ii]有被调低过时通过  情况3会被拦截
-                                suns.add(ii-1,newLastPrice - k);
-                                ifsuns = false;
-                            }
-                            buyidAttribute.clear(); //清空两个变量的值
-                            sellidAllAttribute.clear();
-                            Boolean sellidAllOk = false;
-                            Boolean buyidOk = false;
-                            if (newLastPrice>ying){
-                                sellidAll = globalFun.marketCloseAllProfit("LONG");//市价平掉多头所以订单
-                                if (positionNew.get("down")!=0.0){
-                                    globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
-                                }
-                                sellidAllOk = true;
-                                //第13处权重 权重：1  期货每分钟权重上限2400
-                                sellidAllAttribute = globalFun.come(sellidAll);
-                            }else if (newLastPrice < suns.get(ii-1)){
-                                buyid = globalFun.marketBuy(2*a);//市价开多
-                                globalFun.marketSell(a);
-                                buyidOk = true;
-                                //并列第13处权重 权重：1  期货每分钟权重上限2400
-                                buyidAttribute = globalFun.come(buyid);
-                            }
-                            /*判断两个订单状态*/
-                            if (buyidOk){//又补了一份仓
-                                ii++;
-                                if (yings.size()<=ii-1){
-                                    yings.add(globalFun.getDouble((String) buyidAttribute.get("avgPrice"))+k);
-                                    suns.add(globalFun.getDouble((String) buyidAttribute.get("avgPrice"))-k);
-                                }else{
-                                    yings.add(ii-1,globalFun.getDouble((String) buyidAttribute.get("avgPrice"))+k);
-                                    suns.add(ii-1,globalFun.getDouble((String) buyidAttribute.get("avgPrice"))-k);
-                                }
-                                recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
-                                break;
-                            }else  if (sellidAllOk){//平仓全部了，可以什么都不做
-                                ii--;//清空了仓位以后以后把ii清零
-                                recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
-                                break;
-                            }
-                            this.quantitySleep30();//休眠30秒
-                            this.quantitySleep30();//休眠30秒
-                            this.quantitySleep30();//休眠30秒
                             newLastPrice = globalFun.lastPrice();
+                            if (newLastPrice!=null){
+                                Double originalSun = suns.get(ii-1);
+                                //刚进来时现价分三种情况:1.newLastPrice 位于上半部分  2.newLastPrice 位于下半部分  3.newLastPrice 位于suns.get(ii)下面
+                                if (ifsuns && newLastPrice - k < suns.get(ii-1)){ //情况2 刚进来时允许通过一次
+                                    suns.add(ii-1,newLastPrice-k-6);
+                                }
+
+                                if (newLastPrice-k-suns.get(ii-1)>5 && originalSun-5>suns.get(ii-1)){//情况2第一次时通过  情况1并且suns[ii]有被调低过时通过  情况3会被拦截
+                                    suns.add(ii-1,newLastPrice - k);
+                                    ifsuns = false;
+                                }
+                                buyidAttribute.clear(); //清空两个变量的值
+                                sellidAllAttribute.clear();
+                                Boolean sellidAllOk = false;
+                                Boolean buyidOk = false;
+                                if (newLastPrice>ying){
+                                    sellidAll = globalFun.marketCloseAllProfit("LONG");//市价平掉多头所以订单
+                                    if (positionNew.get("down")!=0.0){
+                                        globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                                    }
+                                    sellidAllOk = true;
+                                    //第13处权重 权重：1  期货每分钟权重上限2400
+                                    sellidAllAttribute = globalFun.come(sellidAll);
+                                }else if (newLastPrice < suns.get(ii-1)){
+                                    buyid = globalFun.marketBuy(2*a);//市价开多
+                                    globalFun.marketSell(a);
+                                    buyidOk = true;
+                                    //并列第13处权重 权重：1  期货每分钟权重上限2400
+                                    buyidAttribute = globalFun.come(buyid);
+                                }
+                                /*判断两个订单状态*/
+                                if (buyidOk){//又补了一份仓
+                                    ii++;
+                                    if (yings.size()<=ii-1){
+                                        yings.add(globalFun.getDouble((String) buyidAttribute.get("avgPrice"))+k);
+                                        suns.add(globalFun.getDouble((String) buyidAttribute.get("avgPrice"))-k);
+                                    }else{
+                                        yings.add(ii-1,globalFun.getDouble((String) buyidAttribute.get("avgPrice"))+k);
+                                        suns.add(ii-1,globalFun.getDouble((String) buyidAttribute.get("avgPrice"))-k);
+                                    }
+                                    recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                                    break;
+                                }else  if (sellidAllOk){//平仓全部了，可以什么都不做
+                                    ii--;//清空了仓位以后以后把ii清零
+                                    recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                                    break;
+                                }
+                            }
+                            this.quantitySleep60();//休眠60秒
+                            this.quantitySleep60();//休眠60秒
                         }
                         /*↓ 三级循环2区 ↓*/
                         Boolean ifsuns2 = true;
                         while (miniimaxIf == 2&&this.getLineIf()){
-                            Double originalSun2 = suns.get(ii-1);
-                            if (ifsuns2 && newLastPrice-k<suns.get(ii-1)){
-                                suns.add(ii-1,newLastPrice-k+6);
-                            }
-                            /*能进来就是市价成交,以进不进来为风险控制,不存在现价比sun[ii]低还得慢慢追涨的情况*/
-                            if (newLastPrice-k-suns.get(ii-1)>5 && originalSun2-5>suns.get(ii-1)){
-                                suns.add(ii-1,newLastPrice-k);
-                                ifsuns2 = false;
-                            }
-                            sellidAttribute.clear();
-                            buyidAttribute.clear();
-                            Boolean sellidOk = false;
-                            Boolean buyidOk2 = false;
-                            if (newLastPrice>yings.get(ii-1)){
-                                sellid = globalFun.marketCloseBuy(2*a);
-                                if (positionNew.get("down")!=0.0){
-                                    globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
-                                }
-                                sellidOk = true;
-                                this.quantitySleep30();//休眠30秒
-                                this.quantitySleep30();//休眠30秒
-                                sellidAttribute = globalFun.come(sellid);
-                            }else if (newLastPrice<suns.get(ii-1)){
-                                buyid = globalFun.marketBuy(2*a);
-                                globalFun.marketSell(a);
-                                buyidOk2 = true;
-                                this.quantitySleep30();//休眠30秒
-                                this.quantitySleep30();//休眠30秒
-                                buyidAttribute = globalFun.come(buyid);
-                            }
-                            //如果成交跳出
-                            if (sellidOk){
-                                ii--;
-                                recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
-                                break;
-                            }else if (buyidOk2){
-                                ii++;
-                                if (yings.size()<=ii-1){
-                                    yings.add(globalFun.getDouble((String)buyidAttribute.get("avgPrice"))+k);
-                                    suns.add(globalFun.getDouble((String)buyidAttribute.get("avgPrice"))-k);
-                                }else {
-                                    yings.add(ii-1,globalFun.getDouble((String)buyidAttribute.get("avgPrice"))+k);
-                                    suns.add(ii-1,globalFun.getDouble((String)buyidAttribute.get("avgPrice"))-k);
-                                }
-                                recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
-                                break;
-                            }
-                            this.quantitySleep30();//休眠30秒
-                            this.quantitySleep30();//休眠30秒
                             newLastPrice = globalFun.lastPrice();
+                            if (newLastPrice!=null){
+                                Double originalSun2 = suns.get(ii-1);
+                                if (ifsuns2 && newLastPrice-k<suns.get(ii-1)){
+                                    suns.add(ii-1,newLastPrice-k+6);
+                                }
+                                /*能进来就是市价成交,以进不进来为风险控制,不存在现价比sun[ii]低还得慢慢追涨的情况*/
+                                if (newLastPrice-k-suns.get(ii-1)>5 && originalSun2-5>suns.get(ii-1)){
+                                    suns.add(ii-1,newLastPrice-k);
+                                    ifsuns2 = false;
+                                }
+                                sellidAttribute.clear();
+                                buyidAttribute.clear();
+                                Boolean sellidOk = false;
+                                Boolean buyidOk2 = false;
+                                if (newLastPrice>yings.get(ii-1)){
+                                    sellid = globalFun.marketCloseBuy(2*a);
+                                    if (positionNew.get("down")!=0.0){
+                                        globalFun.marketCloseAllProfit("SHORT");//平空头时输入SHORT  平仓全部
+                                    }
+                                    sellidOk = true;
+                                    this.quantitySleep60();//休眠60秒
+                                    sellidAttribute = globalFun.come(sellid);
+                                }else if (newLastPrice<suns.get(ii-1)){
+                                    buyid = globalFun.marketBuy(2*a);
+                                    globalFun.marketSell(a);
+                                    buyidOk2 = true;
+                                    this.quantitySleep60();//休眠60秒
+                                    buyidAttribute = globalFun.come(buyid);
+                                }
+                                //如果成交跳出
+                                if (sellidOk){
+                                    ii--;
+                                    recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                                    break;
+                                }else if (buyidOk2){
+                                    ii++;
+                                    if (yings.size()<=ii-1){
+                                        yings.add(globalFun.getDouble((String)buyidAttribute.get("avgPrice"))+k);
+                                        suns.add(globalFun.getDouble((String)buyidAttribute.get("avgPrice"))-k);
+                                    }else {
+                                        yings.add(ii-1,globalFun.getDouble((String)buyidAttribute.get("avgPrice"))+k);
+                                        suns.add(ii-1,globalFun.getDouble((String)buyidAttribute.get("avgPrice"))-k);
+                                    }
+                                    recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
+                                    break;
+                                }
+                            }
+                            this.quantitySleep60();//休眠60秒
+                            this.quantitySleep60();//休眠60秒
                         }
                     }
                 }catch (Exception e){
@@ -463,9 +481,9 @@ public  class BankDancerThread  implements Runnable {
     /**
      * 休眠30秒
      */
-    private void quantitySleep30(){
+    private void quantitySleep60(){
         try {
-            Thread.sleep(35000);//休眠35秒
+            Thread.sleep(61000);//休眠61秒
         }catch (Exception e){}
     }
 }
