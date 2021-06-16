@@ -200,7 +200,7 @@ public class GlobalFun extends ActiveMethod implements ImplBankDancer {
         try {
             return super.setWay_();
         }catch (Exception e){
-            log.info("设置持仓方向异常,这个异常是很正常的{}",e);
+
         }
         return null;
     }
