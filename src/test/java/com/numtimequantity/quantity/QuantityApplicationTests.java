@@ -47,7 +47,7 @@ TopSymbolThread topSymbolThread;
         simpleClientHttpRequestFactory.setReadTimeout(10000);//从主机读取数据的超时时间 只设置了ConnectionTimeout没有设置ReadTimeout，结果导致线程卡死。
         RestTemplate restTemplate = new RestTemplate(simpleClientHttpRequestFactory);
         SimpleClientHttpRequestFactory reqfac = new SimpleClientHttpRequestFactory();
-        reqfac.setProxy(new Proxy(Proxy.Type.HTTP,new InetSocketAddress("127.0.0.1", 1080)));
+        //reqfac.setProxy(new Proxy(Proxy.Type.HTTP,new InetSocketAddress("127.0.0.1", 1080)));
         restTemplate.setRequestFactory(reqfac);
         ResponseEntity<ArrayList> forEntity = restTemplate.getForEntity(URI.create("https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=1000"), ArrayList.class);
         List<List> kRecords2 = forEntity.getBody();

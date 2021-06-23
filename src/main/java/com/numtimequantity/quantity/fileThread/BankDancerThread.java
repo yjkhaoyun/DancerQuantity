@@ -180,12 +180,15 @@ public  class BankDancerThread  implements Runnable {
                         log.info("获取公共指标函数的时间戳强制转成Long类型时报错{}",e);
                     }
                     //第6处权重 权重：1  期货每分钟权重上限2400
-
                     while (true){
                         Thread.sleep(30000);
-                        newLastPrice = globalFun.lastPrice();
-                        if (newLastPrice!=null){
-                            break;
+                        try {
+                            newLastPrice = globalFun.lastPrice();
+                            if (newLastPrice!=null){
+                                break;
+                            }
+                        }catch (Exception e){
+                            log.info("进入二级循环前获取最新价报错{}",e);
                         }
                     }
                     //第7处权重 权重：5  期货每分钟权重上限2400
@@ -336,9 +339,9 @@ public  class BankDancerThread  implements Runnable {
                         /*↓三级循环1区↓*/
                         Boolean ifsuns = true;
                         while (miniimaxIf == 1 && this.getLineIf()){
-                            newLastPrice = globalFun.lastPrice();
-                            if (newLastPrice!=null){
-                                try {
+                            try {
+                                newLastPrice = globalFun.lastPrice();
+                                if (newLastPrice!=null){
                                     Double originalSun = suns.get(ii-1);
                                     //刚进来时现价分三种情况:1.newLastPrice 位于上半部分  2.newLastPrice 位于下半部分  3.newLastPrice 位于suns.get(ii)下面
                                     if (ifsuns && newLastPrice - k < suns.get(ii-1)){ //情况2 刚进来时允许通过一次
@@ -385,19 +388,19 @@ public  class BankDancerThread  implements Runnable {
                                         recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                                         break;
                                     }
-                                }catch (Exception e){
-                                    log.info("三级循环一区报错,报错后休息一个小时{}",e);
-                                    Thread.sleep(60000*60);
                                 }
+                            }catch (Exception e){
+                                log.info("三级循环一区报错,报错后休息一个小时{}",e);
+                                Thread.sleep(60000*60);
                             }
                             Thread.sleep(60000*2);
                         }
                         /*↓ 三级循环2区 ↓*/
                         Boolean ifsuns2 = true;
                         while (miniimaxIf == 2&&this.getLineIf()){
-                            newLastPrice = globalFun.lastPrice();
-                            if (newLastPrice!=null){
-                                try{
+                            try{
+                                newLastPrice = globalFun.lastPrice();
+                                if (newLastPrice!=null){
                                     Double originalSun2 = suns.get(ii-1);
                                     if (ifsuns2 && newLastPrice-k<suns.get(ii-1)){
                                         suns.add(ii-1,newLastPrice-k+6);
@@ -443,10 +446,11 @@ public  class BankDancerThread  implements Runnable {
                                         recorderTime = (Long) globalBuyObject.getBuyObject().get("time");
                                         break;
                                     }
-                                }catch (Exception e){
-                                    log.info("三级循环二区出现报错,报错后休息1小时{}",e);
-                                    Thread.sleep(60000*60);
+
                                 }
+                            }catch (Exception e){
+                                log.info("三级循环二区出现报错,报错后休息1小时{}",e);
+                                Thread.sleep(60000*60);
                             }
                             Thread.sleep(60000*2);
                         }
