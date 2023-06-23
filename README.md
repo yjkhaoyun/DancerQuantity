@@ -112,3 +112,8 @@ File→Settings→Editor→General→Auto Import→
 
 暂时先不进行日志信息的打印
 
+#### 作者微信:  yjkhaoyun
+
+#### 加微进交流群
+
+作者承接各种前后的需求项目
