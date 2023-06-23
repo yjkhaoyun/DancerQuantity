@@ -116,4 +116,4 @@ File→Settings→Editor→General→Auto Import→
 
 #### 加微进交流群
 
-作者承接各种前后的需求项目
+作者承接各种前后端需求项目
